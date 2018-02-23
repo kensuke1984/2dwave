@@ -7,7 +7,7 @@ module parameter_copt_run
   logical, parameter :: header_model = .true.
 
 ! size of region
-  double precision, parameter :: X_size = 18.d0
+  double precision, parameter :: X_size = 11118.d0
   double precision, parameter :: Y_size = 4.d0
 
 ! source location
