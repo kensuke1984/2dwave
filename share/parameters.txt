@@ -1,0 +1,75 @@
+! Input parameters for 2dwave
+ 
+!---Information for input structure
+&structure
+modelfile = '../share/structure.csv'
+header_model = .true.
+/
+
+!--- Parameter set for region of computation 
+&geometry
+  ! size of region
+  X_size = 8.d0
+  Y_size = 4.d0
+  !number of boxes in the region
+  NX = 600
+  NY = 300
+/
+
+!--- Parameter set for source
+&source
+  ! source location
+  X_source = 1.0d0
+  Y_source = 3.9d0
+  !source
+  source_type_single = f
+  vx = 1.d0
+  vy = 0.d0
+  source_type_double_couple = t
+  mxx = 1.d0
+  mxy = 0.d0
+  myx = 0.d0
+  myy = 1.d0
+/
+
+!--- Parameter set for computation
+&computation
+  !time length [s]
+  tlen = 10.d0
+  !central period of ricker function [s]
+  tp = 0.153846154 !1.d0/ 6.5d0
+  !shift time [s]  
+  ts = 0.307692308  !2.d0 * tp
+  CFL = 0.3d0
+  maxvp = 2.8d0
+/
+
+&cerjan
+  use_Cerjan = f
+  N_Cerjan = 5
+  dumping_rate_Cerjan = 0.0001d0
+&end
+
+
+&output
+  !snapshot of wavefield
+  need_snapshot = t
+  NT_snap = 100
+  need_waveform = t
+!number of recievers
+  num_rec = 59
+!recievers names and the locations (X,Y) are included  station
+  recinfo = '../share/station.csv'
+  header_recinfo = t
+&end
+
+
+&cpml
+!----------------CPML settings-------------------------------------
+  NX_CPML_lef = 10
+  NX_CPML_rig = 10
+  NY_CPML_btm = 10
+  reflection_rate = 0.001d0
+  source_freq = 7.334464579
+  NPOWER = 20
+&end

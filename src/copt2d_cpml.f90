@@ -1,3 +1,10 @@
+! ============================================================================
+! Name        : copt2d_cpml.f90
+! Author      : Kei Hasegawa
+! Version     : 0.0.1
+! Copyright   : It is Complicated.
+! Description : Procedure for CPML.
+! ============================================================================
 module copt2d_cpml
   implicit none
 
@@ -895,26 +902,25 @@ contains
 
     double precision, parameter :: PI = 3.1415926535897932d0
 
-
     L_lef = dble(NX_CPML_lef) * DELTAX
     L_rig = dble(NX_CPML_rig) * DELTAX
     L_btm = dble(NY_CPML_btm) * DELTAY
+
 
     d0_lef = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_lef
     d0_rig = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_rig
     d0_btm = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_btm
 
     alph0 = PI * source_freq
-
 !------------------the left side of x-axis--------------------------
     do i = 1,NX_CPML_lef
 
       j = NX_CPML_lef - i
-
       d = d0_lef * ( ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) ) ** NPOWER
       alph = alph0 * ( 1.d0 - ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) )
 
       a1_lef(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+
       b1_lef(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
     enddo
@@ -931,7 +937,6 @@ contains
 
     enddo
 !------------------the right side of x-axis--------------------------
-
     do i = NX - NX_CPML_rig+1, NX
 
       j = i - NX + NX_CPML_rig
@@ -956,7 +961,6 @@ contains
 
     enddo
 !------------------the bottom of y-axis------------------------------
-
     do i = 1,NY_CPML_btm
 
       j = NY_CPML_btm - i

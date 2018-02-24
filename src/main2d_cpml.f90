@@ -1,120 +1,21 @@
+! ============================================================================
+! Name        : main2d_cpml.f90
+! Author      : Kei Hasegawa
+! Version     : 0.0.1
+! Copyright   : It is Complicated.
+! Description : Wave propagation in 2D space.
+! ============================================================================
 program main2d
 
-  use parameter_copt_run
+  use parameter_2dwave
   use copt2d_cpml
-
   implicit none
 
 !---------------------------------------------------------------
-
-  double precision :: &
-    DELTAX, DELTAY, DELTAT
-
-  integer :: &
-    NT, MASK_CELL(NX,NY), MASK_NODE(0:NX,0:NY), &
-    MASK1X(NX,0:NY), MASK2Y(NX,NY), &
-    MASK1Y(0:NX,NY), MASK2X(NX,NY)
-
-  double precision, dimension(0:NX,0:NY) :: &
-    u0x, u0y, u1x, u1y, u2x, u2y, corr_ux, corr_uy
-
-  double precision :: &
-    C(3,3,NX,NY), rho(NX,NY), &
-    INV_MASS(0:NX,0:NY), &
-    gx(3,3), gy(3,3)
-
-  double precision, allocatable :: &
-    wavelet(:)
-
-  integer :: &
-    NX_source, NY_source
-
-  integer :: &
-    itime, irec
-  character(len=32) :: &
-    snap_file
-
-  double precision :: &
-    X_rec(num_rec), Y_rec(num_rec)
-  integer :: &
-    NX_rec(num_rec), NY_rec(num_rec)
-  double precision :: &
-    inpo_rec(3,3,num_rec)
-
-  character(len=32) :: &
-    outfname_rec(num_rec)
-
-  double precision, allocatable :: &
-    buffer_ux(:,:), buffer_uy(:,:)
-
-
-!----------------valuables for CPML-------------------------------------
-
-  double precision :: &
-    a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
-    b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
-    a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
-    b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
-
-  double precision :: &
-    dux_dx_lef(NX_CPML_lef,0:NY), &
-    duy_dx_lef(NX_CPML_lef,0:NY), &
-    dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    dux_dy_btm(0:NX,NY_CPML_btm), &
-    duy_dy_btm(0:NX,NY_CPML_btm), &
-    dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
-    dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
-    dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
-    dTyy_dy_btm(0:NX,0:NY_CPML_btm)
-
-  double precision :: &
-    mem1_xx_lef(NX_CPML_lef,0:NY), &
-    mem1_xy_lef(NX_CPML_lef,0:NY), &
-    mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    mem1_yx_btm(0:NX,NY_CPML_btm), &
-    mem1_yy_btm(0:NX,NY_CPML_btm), &
-    mem2_xx_lef(0:NX_CPML_lef,0:NY), &
-    mem2_xy_lef(0:NX_CPML_lef,0:NY), &
-    mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
-    mem2_yx_btm(0:NX,0:NY_CPML_btm), &
-    mem2_yy_btm(0:NX,0:NY_CPML_btm)
-
-  double precision :: &
-    corr_dux_dx_lef(NX_CPML_lef,0:NY), &
-    corr_duy_dx_lef(NX_CPML_lef,0:NY), &
-    corr_dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    corr_duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    corr_dux_dy_btm(0:NX,NY_CPML_btm), &
-    corr_duy_dy_btm(0:NX,NY_CPML_btm), &
-    corr_dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
-    corr_dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
-    corr_dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    corr_dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    corr_dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
-    corr_dTyy_dy_btm(0:NX,0:NY_CPML_btm)
-
-  double precision :: &
-    corr_mem1_xx_lef(NX_CPML_lef,0:NY), &
-    corr_mem1_xy_lef(NX_CPML_lef,0:NY), &
-    corr_mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    corr_mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-    corr_mem1_yx_btm(0:NX,NY_CPML_btm), &
-    corr_mem1_yy_btm(0:NX,NY_CPML_btm), &
-    corr_mem2_xx_lef(0:NX_CPML_lef,0:NY), &
-    corr_mem2_xy_lef(0:NX_CPML_lef,0:NY), &
-    corr_mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
-    corr_mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
-    corr_mem2_yx_btm(0:NX,0:NY_CPML_btm), &
-    corr_mem2_yy_btm(0:NX,0:NY_CPML_btm)
-
-
-
-!-----------END--------------------------------------------------------
+  include 'declaration.f90'
+  call get_arguments
+  call read_parameter
+  include 'allocation.f90'
 
 !###########################################################################
   DELTAX = X_size / dble(NX)
@@ -129,9 +30,11 @@ program main2d
   print *, 'NX = ', NX
   print *, 'NY = ', NY
   print *, 'NT = ', NT
+  call output_parameter
+
 
   call set_physical_parameters&
-    ( NX,NY,rho,C,model_csv, header_model )
+    (NX, NY, rho, C, modelfile, header_model)
 
   if (need_waveform) then
 
@@ -172,7 +75,6 @@ program main2d
 
   call set_reciever_interpolating_function&
     ( NX,NY,num_rec,DELTAX,DELTAY,X_rec,Y_rec,NX_rec,NY_rec,inpo_rec )
-
 
   call set_CPML_parameters&
     ( NX,NY,DELTAT,DELTAX,DELTAY, &
@@ -242,6 +144,7 @@ program main2d
   corr_mem2_yx_btm = 0.d0
   corr_mem2_yy_btm = 0.d0
 !--END----------------------------------------------
+
 
   do itime = 1,NT
 
@@ -382,7 +285,7 @@ program main2d
 
       open(17,file=outfname_rec(irec),status='replace')
 
-      write (17,*) 0.d0, 0.d0
+      write (17,*) 0.d0, 0.d0, 0.d0
 
       do itime = 1,NT
 

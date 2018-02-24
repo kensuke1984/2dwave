@@ -1,0 +1,51 @@
+#Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Eclipse
+.cproject
+.project
+.classpath
+.settings
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# Build
+out/
+build/
+bin/
+lib/
+
+gh-pages/
+
+# Idea
+.idea
+*.iml
+*.iws
+*.ipr
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Gradle
+.gradle/
+!gradle-wrapper.jar
+
+# Maven
+target
+
+# Other
+*.log
+*.swp
+*.bak
+
+#Fortran
+*.o
+*.mod
