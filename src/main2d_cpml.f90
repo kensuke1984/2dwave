@@ -15,7 +15,8 @@ program main2d
   include 'declaration.f90'
   call get_arguments
   call read_parameter
-  include 'allocation.f90'
+  call allocate_main
+  call allocate_cpml(NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm)
 
 !###########################################################################
   DELTAX = X_size / dble(NX)
@@ -86,66 +87,6 @@ program main2d
       b2_lef, b2_rig, b2_btm )
 
 !#######################compute wavefield##########################################
-
-  u0x = 0.d0
-  u0y = 0.d0
-  u1x = 0.d0
-  u1y = 0.d0
-
-!set initial values for CPML valuables-----------------------
-  dux_dx_lef = 0.d0
-  duy_dx_lef = 0.d0
-  dux_dx_rig = 0.d0
-  duy_dx_rig = 0.d0
-  dux_dy_btm = 0.d0
-  duy_dy_btm = 0.d0
-  dTxx_dx_lef = 0.d0
-  dTyx_dx_lef = 0.d0
-  dTxx_dx_rig = 0.d0
-  dTyx_dx_rig = 0.d0
-  dTxy_dy_btm = 0.d0
-  dTyy_dy_btm = 0.d0
-  mem1_xx_lef = 0.d0
-  mem1_xy_lef = 0.d0
-  mem1_xx_rig = 0.d0
-  mem1_xy_rig = 0.d0
-  mem1_yx_btm = 0.d0
-  mem1_yy_btm = 0.d0
-  mem2_xx_lef = 0.d0
-  mem2_xy_lef = 0.d0
-  mem2_xx_rig = 0.d0
-  mem2_xy_rig = 0.d0
-  mem2_yx_btm = 0.d0
-  mem2_yy_btm = 0.d0
-
-
-  corr_dux_dx_lef = 0.d0
-  corr_duy_dx_lef = 0.d0
-  corr_dux_dx_rig = 0.d0
-  corr_duy_dx_rig = 0.d0
-  corr_dux_dy_btm = 0.d0
-  corr_duy_dy_btm = 0.d0
-  corr_dTxx_dx_lef = 0.d0
-  corr_dTyx_dx_lef = 0.d0
-  corr_dTxx_dx_rig = 0.d0
-  corr_dTyx_dx_rig = 0.d0
-  corr_dTxy_dy_btm = 0.d0
-  corr_dTyy_dy_btm = 0.d0
-  corr_mem1_xx_lef = 0.d0
-  corr_mem1_xy_lef = 0.d0
-  corr_mem1_xx_rig = 0.d0
-  corr_mem1_xy_rig = 0.d0
-  corr_mem1_yx_btm = 0.d0
-  corr_mem1_yy_btm = 0.d0
-  corr_mem2_xx_lef = 0.d0
-  corr_mem2_xy_lef = 0.d0
-  corr_mem2_xx_rig = 0.d0
-  corr_mem2_xy_rig = 0.d0
-  corr_mem2_yx_btm = 0.d0
-  corr_mem2_yy_btm = 0.d0
-!--END----------------------------------------------
-
-
   do itime = 1,NT
 
 !-----------write snapshot-------------------------------------------
@@ -304,6 +245,30 @@ program main2d
 contains
 
 !##################################################################################
+  subroutine allocate_main
+    allocate (MASK_CELL(NX,NY),  MASK_NODE(0:NX,0:NY))
+    allocate( MASK1X(NX,0:NY), MASK1Y(0:NX,NY))
+    allocate (  MASK2X(NX,NY),MASK2Y(NX,NY))
+    allocate(u0x(0:NX,0:NY), u0y(0:NX,0:NY))
+    allocate(u1x(0:NX,0:NY), u1y(0:NX,0:NY))
+    allocate(u2x(0:NX,0:NY), u2y(0:NX,0:NY))
+    allocate(       corr_ux(0:NX,0:NY), corr_uy(0:NX,0:NY))
+    allocate(C(3,3,NX,NY), rho(NX,NY))
+    allocate(    INV_MASS(0:NX,0:NY))
+    allocate(X_rec(num_rec), Y_rec(num_rec))
+    allocate (NX_rec(num_rec), NY_rec(num_rec))
+    allocate(    inpo_rec(3,3,num_rec))
+    allocate(  outfname_rec(num_rec))
+
+    u0x = 0.d0
+    u0y = 0.d0
+    u1x = 0.d0
+    u1y = 0.d0
+
+  end subroutine allocate_main
+
+
+
 
   subroutine write_snapshot( NX,NY,MASK_NODE,DELTAX,DELTAY,ux,uy,fname )
 

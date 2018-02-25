@@ -7,8 +7,149 @@
 ! ============================================================================
 module copt2d_cpml
   implicit none
+!----------------valuables for CPML-------------------------------------
+
+  double precision, allocatable, dimension(:) :: &
+    a1_lef, a1_rig, a1_btm, b1_lef, b1_rig, b1_btm, &
+    a2_lef, a2_rig, a2_btm, b2_lef, b2_rig, b2_btm
+
+  double precision, allocatable, dimension(:,:) :: &
+    dux_dx_lef, duy_dx_lef, dux_dx_rig, duy_dx_rig, dux_dy_btm, duy_dy_btm, &
+    dTxx_dx_lef, dTyx_dx_lef, dTxx_dx_rig, dTyx_dx_rig, dTxy_dy_btm, dTyy_dy_btm
+
+  double precision, allocatable, dimension(:,:) :: &
+    mem1_xx_lef, mem1_xy_lef, mem1_xx_rig, mem1_xy_rig, mem1_yx_btm, mem1_yy_btm, &
+    mem2_xx_lef, mem2_xy_lef, mem2_xx_rig, mem2_xy_rig, mem2_yx_btm, mem2_yy_btm
+
+  double precision, allocatable, dimension(:,:) :: &
+    corr_dux_dx_lef, corr_duy_dx_lef, corr_dux_dx_rig, corr_duy_dx_rig, &
+    corr_dux_dy_btm, corr_duy_dy_btm, corr_dTxx_dx_lef, corr_dTyx_dx_lef, &
+    corr_dTxx_dx_rig, corr_dTyx_dx_rig, corr_dTxy_dy_btm, corr_dTyy_dy_btm
+
+  double precision,  allocatable, dimension(:,:):: &
+    corr_mem1_xx_lef, corr_mem1_xy_lef, corr_mem1_xx_rig, &
+    corr_mem1_xy_rig, corr_mem1_yx_btm, corr_mem1_yy_btm, &
+    corr_mem2_xx_lef, corr_mem2_xy_lef, corr_mem2_xx_rig, &
+    corr_mem2_xy_rig, corr_mem2_yx_btm, corr_mem2_yy_btm
+
+!-----------END CPML--------------------------------------------------------
 
 contains
+
+  subroutine allocate_cpml(NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm)
+    implicit none
+    integer, intent(in) :: NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm
+    !----------------valuables for CPML-------------------------------------
+    allocate (a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm))
+    allocate (b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm))
+    allocate (a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm))
+    allocate (b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm))
+
+    allocate (dux_dx_lef(NX_CPML_lef,0:NY))
+    allocate (duy_dx_lef(NX_CPML_lef,0:NY))
+    allocate (dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (dux_dy_btm(0:NX,NY_CPML_btm))
+    allocate (duy_dy_btm(0:NX,NY_CPML_btm))
+    allocate (dTxx_dx_lef(0:NX_CPML_lef,0:NY))
+    allocate (dTyx_dx_lef(0:NX_CPML_lef,0:NY))
+    allocate (dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (dTxy_dy_btm(0:NX,0:NY_CPML_btm))
+    allocate (dTyy_dy_btm(0:NX,0:NY_CPML_btm))
+
+    allocate (mem1_xx_lef(NX_CPML_lef,0:NY))
+    allocate (mem1_xy_lef(NX_CPML_lef,0:NY))
+    allocate (mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (mem1_yx_btm(0:NX,NY_CPML_btm))
+    allocate (mem1_yy_btm(0:NX,NY_CPML_btm))
+    allocate (mem2_xx_lef(0:NX_CPML_lef,0:NY))
+    allocate (mem2_xy_lef(0:NX_CPML_lef,0:NY))
+    allocate (mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (mem2_yx_btm(0:NX,0:NY_CPML_btm))
+    allocate (mem2_yy_btm(0:NX,0:NY_CPML_btm))
+
+    allocate (corr_dux_dx_lef(NX_CPML_lef,0:NY))
+    allocate (corr_duy_dx_lef(NX_CPML_lef,0:NY))
+    allocate (corr_dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (corr_duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (corr_dux_dy_btm(0:NX,NY_CPML_btm))
+    allocate (corr_duy_dy_btm(0:NX,NY_CPML_btm))
+    allocate (corr_dTxx_dx_lef(0:NX_CPML_lef,0:NY))
+    allocate (corr_dTyx_dx_lef(0:NX_CPML_lef,0:NY))
+    allocate (corr_dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (corr_dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (corr_dTxy_dy_btm(0:NX,0:NY_CPML_btm))
+    allocate (corr_dTyy_dy_btm(0:NX,0:NY_CPML_btm))
+
+    allocate (corr_mem1_xx_lef(NX_CPML_lef,0:NY))
+    allocate (corr_mem1_xy_lef(NX_CPML_lef,0:NY))
+    allocate (corr_mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (corr_mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
+    allocate (corr_mem1_yx_btm(0:NX,NY_CPML_btm))
+    allocate (corr_mem1_yy_btm(0:NX,NY_CPML_btm))
+    allocate (corr_mem2_xx_lef(0:NX_CPML_lef,0:NY))
+    allocate (corr_mem2_xy_lef(0:NX_CPML_lef,0:NY))
+    allocate (corr_mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (corr_mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
+    allocate (corr_mem2_yx_btm(0:NX,0:NY_CPML_btm))
+    allocate (corr_mem2_yy_btm(0:NX,0:NY_CPML_btm))
+
+    dux_dx_lef = 0.d0
+    duy_dx_lef = 0.d0
+    dux_dx_rig = 0.d0
+    duy_dx_rig = 0.d0
+    dux_dy_btm = 0.d0
+    duy_dy_btm = 0.d0
+    dTxx_dx_lef = 0.d0
+    dTyx_dx_lef = 0.d0
+    dTxx_dx_rig = 0.d0
+    dTyx_dx_rig = 0.d0
+    dTxy_dy_btm = 0.d0
+    dTyy_dy_btm = 0.d0
+    mem1_xx_lef = 0.d0
+    mem1_xy_lef = 0.d0
+    mem1_xx_rig = 0.d0
+    mem1_xy_rig = 0.d0
+    mem1_yx_btm = 0.d0
+    mem1_yy_btm = 0.d0
+    mem2_xx_lef = 0.d0
+    mem2_xy_lef = 0.d0
+    mem2_xx_rig = 0.d0
+    mem2_xy_rig = 0.d0
+    mem2_yx_btm = 0.d0
+    mem2_yy_btm = 0.d0
+
+    corr_dux_dx_lef = 0.d0
+    corr_duy_dx_lef = 0.d0
+    corr_dux_dx_rig = 0.d0
+    corr_duy_dx_rig = 0.d0
+    corr_dux_dy_btm = 0.d0
+    corr_duy_dy_btm = 0.d0
+    corr_dTxx_dx_lef = 0.d0
+    corr_dTyx_dx_lef = 0.d0
+    corr_dTxx_dx_rig = 0.d0
+    corr_dTyx_dx_rig = 0.d0
+    corr_dTxy_dy_btm = 0.d0
+    corr_dTyy_dy_btm = 0.d0
+    corr_mem1_xx_lef = 0.d0
+    corr_mem1_xy_lef = 0.d0
+    corr_mem1_xx_rig = 0.d0
+    corr_mem1_xy_rig = 0.d0
+    corr_mem1_yx_btm = 0.d0
+    corr_mem1_yy_btm = 0.d0
+    corr_mem2_xx_lef = 0.d0
+    corr_mem2_xy_lef = 0.d0
+    corr_mem2_xx_rig = 0.d0
+    corr_mem2_xy_rig = 0.d0
+    corr_mem2_yx_btm = 0.d0
+    corr_mem2_yy_btm = 0.d0
+
+  end subroutine allocate_cpml
+
+
 
   subroutine compt_inverse_diagonal_mass&
     ( NX,NY,MASK1Y,MASK2X,rho,DELTAT,INV_MASS )

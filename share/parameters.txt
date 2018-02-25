@@ -2,7 +2,7 @@
  
 !---Information for input structure
 &structure
-modelfile = '../share/structure.csv'
+modelfile = '../share/homo_structure.csv'
 header_model = .true.
 /
 
@@ -71,5 +71,5 @@ header_model = .true.
   NY_CPML_btm = 10
   reflection_rate = 0.001d0
   source_freq = 7.334464579
-  NPOWER = 20
+  NPOWER = 2
 &end
