@@ -24,7 +24,7 @@
   double precision,allocatable  :: inpo_rec(:,:,:)
 
   character(len=32) :: snap_file
-  character(len=32),allocatable :: outfname_rec(:)
+  character(len=100),allocatable :: outfname_rec(:)
 
   double precision, allocatable :: buffer_ux(:,:), buffer_uy(:,:)
 

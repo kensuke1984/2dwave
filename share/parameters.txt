@@ -2,7 +2,7 @@
  
 !---Information for input structure
 &structure
-modelfile = '../share/homo_structure.csv'
+modelfile = '../share/structure.csv'
 header_model = .true.
 /
 
@@ -55,10 +55,12 @@ header_model = .true.
   !snapshot of wavefield
   need_snapshot = t
   NT_snap = 100
+  !should be four outputs (x y ux uy)
+  snap_format = '(4E15.7)'
   need_waveform = t
-!number of recievers
-  num_rec = 59
-!recievers names and the locations (X,Y) are included  station
+  !should be three outputs (t ux uy)
+  wave_format = '(3E15.7)'
+!receivers names and the locations (X,Y) are included  station
   recinfo = '../share/station.csv'
   header_recinfo = t
 &end

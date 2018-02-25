@@ -22,6 +22,8 @@ build/
 bin/
 lib/
 
+debug/
+
 gh-pages/
 
 # Idea

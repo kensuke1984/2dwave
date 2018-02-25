@@ -39,11 +39,14 @@ program main2d
 
   if (need_waveform) then
 
+    call set_receiver_info&
+      ( num_rec, X_rec, Y_rec, outfname_rec, recinfo )
+
     allocate( buffer_ux(num_rec,NT), buffer_uy(num_rec,NT) )
-
-    call set_reciever_info&
-      ( num_rec,X_rec,Y_rec,outfname_rec,recinfo,header_recinfo )
-
+    allocate (NX_rec(num_rec), NY_rec(num_rec))
+    allocate(inpo_rec(3,3,num_rec))
+    call set_reciever_interpolating_function&
+      ( NX,NY,num_rec,DELTAX,DELTAY,X_rec,Y_rec,NX_rec,NY_rec,inpo_rec )
   endif
 
   call make_mask&
@@ -72,10 +75,6 @@ program main2d
     stop 'invalid source type'
 
   endif
-
-
-  call set_reciever_interpolating_function&
-    ( NX,NY,num_rec,DELTAX,DELTAY,X_rec,Y_rec,NX_rec,NY_rec,inpo_rec )
 
   call set_CPML_parameters&
     ( NX,NY,DELTAT,DELTAX,DELTAY, &
@@ -223,14 +222,13 @@ program main2d
   if ( need_waveform ) then
 
     do irec = 1,num_rec
-
       open(17,file=outfname_rec(irec),status='replace')
 
       write (17,*) 0.d0, 0.d0, 0.d0
 
       do itime = 1,NT
 
-        write(17,*) DELTAT*dble(itime), buffer_ux(irec,itime), buffer_uy(irec,itime)
+        write(17,fmt=wave_format) DELTAT*dble(itime), buffer_ux(irec,itime), buffer_uy(irec,itime)
 
       enddo
 
@@ -246,19 +244,19 @@ contains
 
 !##################################################################################
   subroutine allocate_main
-    allocate (MASK_CELL(NX,NY),  MASK_NODE(0:NX,0:NY))
-    allocate( MASK1X(NX,0:NY), MASK1Y(0:NX,NY))
-    allocate (  MASK2X(NX,NY),MASK2Y(NX,NY))
+    allocate(MASK_CELL(NX,NY), MASK_NODE(0:NX,0:NY))
+    allocate(MASK1X(NX,0:NY), MASK1Y(0:NX,NY))
+    allocate(MASK2X(NX,NY), MASK2Y(NX,NY))
     allocate(u0x(0:NX,0:NY), u0y(0:NX,0:NY))
     allocate(u1x(0:NX,0:NY), u1y(0:NX,0:NY))
     allocate(u2x(0:NX,0:NY), u2y(0:NX,0:NY))
-    allocate(       corr_ux(0:NX,0:NY), corr_uy(0:NX,0:NY))
+    allocate(corr_ux(0:NX,0:NY), corr_uy(0:NX,0:NY))
     allocate(C(3,3,NX,NY), rho(NX,NY))
-    allocate(    INV_MASS(0:NX,0:NY))
-    allocate(X_rec(num_rec), Y_rec(num_rec))
-    allocate (NX_rec(num_rec), NY_rec(num_rec))
-    allocate(    inpo_rec(3,3,num_rec))
-    allocate(  outfname_rec(num_rec))
+    allocate(INV_MASS(0:NX,0:NY))
+!    allocate(X_rec(num_rec), Y_rec(num_rec))
+!    allocate (NX_rec(num_rec), NY_rec(num_rec))
+!    allocate(inpo_rec(3,3,num_rec))
+!    allocate(outfname_rec(num_rec))
 
     u0x = 0.d0
     u0y = 0.d0
@@ -289,15 +287,15 @@ contains
 
     do i = 0,NX
 
-      X = dble(i-1) * DELTAX
+      X = dble(i) * DELTAX
 
       do j = 0,NY
 
-        Y = dble(j-1) * DELTAY
+        Y = dble(j) * DELTAY
 
         if ( MASK_NODE(i,j) == 1) then
 
-          write(17,*) X, Y, ux(i,j), uy(i,j)
+          write(17,fmt=snap_format) X, Y, ux(i,j), uy(i,j)
 
         endif
 
@@ -520,7 +518,7 @@ contains
 
     enddo
 
-  end subroutine
+  end subroutine set_reciever_interpolating_function
 !##################################################################################
 
   subroutine compt_absorbing_boundary_Cerjan&
@@ -754,51 +752,55 @@ contains
   end subroutine
 
 !##################################################################################
+  subroutine set_receiver_info&
+   ( num_rec, X_rec, Y_rec, outfname_rec, recinfo )
+    implicit none
+    character(*), intent(in) :: recinfo
 
-  subroutine set_reciever_info&
-    ( num_rec,X_rec,Y_rec,outfname_rec,recinfo,header )
+    integer, intent(out) :: num_rec
 
-    integer, intent(in) :: &
-      num_rec
+    double precision,allocatable, intent(out) :: &
+      X_rec(:), Y_rec(:)
 
-    character(*), intent(in) :: &
-      recinfo
+    character(100),allocatable, intent(out) :: &
+      outfname_rec(:)
 
-    logical, intent(in) :: &
-      header
+    character(1024) buffer
+    integer :: iline, io, name_length
 
-    double precision, intent(out) :: &
-      X_rec(num_rec), Y_rec(num_rec)
-
-    character(*), intent(out) :: &
-      outfname_rec(num_rec)
-
-    integer :: iline
-
-    X_rec = - 80704.d0
+!    X_rec = - 80704.d0
 
     open (17, file=recinfo, status='old')
-
-    if ( header ) read (17, '()')  !skip header
-
-    do iline = 1, num_rec
-
-      read (17, *) outfname_rec(iline), X_rec(iline), Y_rec(iline)
-
+    num_rec =0
+!    if ( header ) read (17, '()')  !skip header
+    do
+      read(17,'(a)',iostat=io) buffer
+      buffer = adjustl(buffer)
+      name_length = index(buffer,',')
+      buffer = buffer(1:1)
+      if(buffer =='#' .or. buffer == '!') cycle
+      if (io/=0) exit
+      if(name_length ==0) stop 'Something wrong.'
+      if(name_length >101) stop 'Each length of each output path must be less than 100 characters.'
+      num_rec = num_rec + 1
     enddo
-
+    allocate(outfname_rec(num_rec))
+    allocate(X_rec(num_rec), Y_rec(num_rec))
+    rewind(17)
+    iline =1
+    do
+      read (17,'(a)', iostat = io) buffer
+      if (io/=0) exit
+      buffer = adjustl(buffer)
+      if(buffer(1:1) =='#' .or. buffer(1:1) == '!') cycle
+      buffer = trim(buffer)
+      read (buffer,*) outfname_rec(iline), X_rec(iline), Y_rec(iline)
+      outfname_rec(iline) = trim(adjustl(outfname_rec(iline)))
+      if ( X_rec(iline) < 0.d0 .or. Y_rec(iline) <0) stop 'reciever info file is invalid'
+      iline = iline +1
+    enddo
     close (17)
 
-!--check if csv is correctly inputted----
-    do iline = 1,num_rec
-
-      if ( X_rec(iline) < 0.d0 ) stop 'reciever info file is invalid'
-
-    enddo
-
-!----END-------------------------------
-
-  end subroutine
-
+  end subroutine set_receiver_info
 
 end program

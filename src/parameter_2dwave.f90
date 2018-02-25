@@ -59,13 +59,18 @@ module parameter_2dwave
 
   logical :: need_snapshot = .true.
   integer :: NT_snap = 100
+  !should be four outputs (x y ux uy)
+  character(12) :: snap_format = '(4G15.5)'
   logical :: need_waveform = .true.
+  !should be three outputs (t ux uy)
+  character(12) :: wave_format = '(3G15.5)'
 !number of recievers
-  integer :: num_rec = 59
+  integer :: num_rec
 !recievers names and the locations (X,Y) are included  station
   character(len=32) :: recinfo = 'recinfo.csv'
   logical :: header_recinfo = .false.
-  namelist/output/need_snapshot, NT_snap, need_waveform, num_rec, recinfo, header_recinfo
+  namelist/output/need_snapshot, NT_snap, snap_format, &
+            need_waveform, wave_format, recinfo, header_recinfo
 
 !----------------CPML settings-------------------------------------
   integer :: NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
