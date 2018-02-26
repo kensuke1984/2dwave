@@ -10,7 +10,7 @@
 
 # Change this line if you are using a different Fortran compiler
 FORTRAN_COMPILER = gfortran
-FORTRAN_COMPILER = ifort
+#FORTRAN_COMPILER = ifort
 
 TARGET = ../bin/copt2d
 SRCS = copt2d_cpml.f90 parameter_2dwave.f90 main2d_cpml_v2.f90
