@@ -11,8 +11,11 @@
 #DEBUG = -debug -check bounds -warn interface -g
 .SUFFIXES: .f90
 
-all: src
+all:bin src 
 	
+bin:
+	@mkdir bin
+
 src::
 	@(cd src; make)
 	
