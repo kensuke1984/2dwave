@@ -1,4 +1,11 @@
-  double precision :: DELTAX, DELTAY, DELTAT
+! ============================================================================
+! Name        : declaration.f90
+! Author      : Kensuke Konishi
+! Version     : 0.0.1
+! Copyright   : It is Complicated.
+! Description : Declaration part for 2D space.
+! ============================================================================
+double precision :: DELTAX, DELTAY, DELTAT
   integer :: NT
 
   integer, allocatable, dimension (:,:) :: &

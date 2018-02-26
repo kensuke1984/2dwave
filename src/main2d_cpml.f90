@@ -1,6 +1,6 @@
 ! ============================================================================
 ! Name        : main2d_cpml.f90
-! Author      : Kei Hasegawa
+! Author      : Kei Hasegawa, Kensuke Konishi
 ! Version     : 0.0.1
 ! Copyright   : It is Complicated.
 ! Description : Wave propagation in 2D space.

@@ -3,6 +3,19 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="photran.managedbuild.toolchain.intel.fortran.x86_64.base.1325868487">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="photran.managedbuild.toolchain.intel.fortran.x86_64.base.1325868487" moduleId="org.eclipse.cdt.core.settings" name="Default">
+				<macros>
+					<stringListMacro name="PATH" type="VALUE_TEXT_LIST">
+						<value name="/usr/lib64/qt-3.3/bin"/>
+						<value name="/usr/local/bin"/>
+						<value name="/usr/local/sbin"/>
+						<value name="/usr/bin"/>
+						<value name="/usr/sbin"/>
+						<value name="/opt/intel/composer_xe_2013_sp1.2.144/bin/intel64"/>
+						<value name="/bin"/>
+						<value name="/sbin"/>
+						<value name="/home/kensuke/bin"/>
+					</stringListMacro>
+				</macros>
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -26,7 +39,12 @@
 					<folderInfo id="photran.managedbuild.toolchain.intel.fortran.x86_64.base.1325868487.1288993832" name="/" resourcePath="">
 						<toolChain id="photran.managedbuild.toolchain.intel.fortran.x86_64.base.1795513616" name="Intel(R) Fortran Toolchain on Intel(R) 64" superClass="photran.managedbuild.toolchain.intel.fortran.x86_64.base">
 							<targetPlatform archList="x86_64" binaryParser="org.eclipse.cdt.core.ELF;org.eclipse.cdt.core.GNU_ELF;org.eclipse.cdt.core.PE;org.eclipse.cdt.core.Cygwin_PE;org.eclipse.cdt.core.XCOFF32;org.eclipse.cdt.core.SOM;org.eclipse.cdt.core.MachO;org.eclipse.cdt.core.MachO64" id="photran.managedbuild.target.intel.platform.x86_64.base.994673868" name="Intel(R) 64 Platform" osList="linux" superClass="photran.managedbuild.target.intel.platform.x86_64.base"/>
-							<builder id="photran.managedbuild.target.intel.builder.x86_64.base.1326572429" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="photran.managedbuild.target.intel.builder.x86_64.base"/>
+							<builder id="photran.managedbuild.target.intel.builder.x86_64.base.1326572429" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="photran.managedbuild.target.intel.builder.x86_64.base">
+								<outputEntries>
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="bin"/>
+								</outputEntries>
+							</builder>
 							<tool id="photran.managedbuild.tool.intel.gnu.c.compiler.x86_64.base.1919321285" name="GCC C Compiler" superClass="photran.managedbuild.tool.intel.gnu.c.compiler.x86_64.base">
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.433792712" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -57,9 +75,17 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="2dwave.null.965804773" name="2dwave"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/2dwave"/>
+		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="photran.managedbuild.toolchain.intel.fortran.x86_64.base.1325868487;photran.managedbuild.toolchain.intel.fortran.x86_64.base.1325868487.1288993832;photran.managedbuild.tool.intel.gnu.c.compiler.x86_64.base.1919321285;cdt.managedbuild.tool.gnu.c.compiler.input.433792712">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>
