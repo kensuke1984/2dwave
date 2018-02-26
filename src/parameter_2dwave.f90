@@ -107,7 +107,7 @@ module parameter_2dwave
     end subroutine output_parameter
 
     subroutine get_arguments
-      integer :: i, length, status, nargs
+      integer :: length, status
       intrinsic :: command_argument_count, get_command_argument
       if (command_argument_count() > 1) stop 'Only one argument (input file name) is available'
       if (command_argument_count() == 0) stop 'Input file name is required'

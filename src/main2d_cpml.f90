@@ -793,14 +793,15 @@ contains
       if (io/=0) exit
       buffer = adjustl(buffer)
       if(buffer(1:1) =='#' .or. buffer(1:1) == '!') cycle
+      name_length = index(buffer, ",")
       buffer = trim(buffer)
-      read (buffer,*) outfname_rec(iline), X_rec(iline), Y_rec(iline)
+      outfname_rec(iline) = buffer(1:name_length-1)
+      read (buffer(name_length+1:),*) X_rec(iline), Y_rec(iline)
       outfname_rec(iline) = trim(adjustl(outfname_rec(iline)))
       if ( X_rec(iline) < 0.d0 .or. Y_rec(iline) <0) stop 'reciever info file is invalid'
       iline = iline +1
     enddo
     close (17)
-
   end subroutine set_receiver_info
 
 end program
