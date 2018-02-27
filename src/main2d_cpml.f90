@@ -24,14 +24,8 @@ program main2d
     DELTAT = CFL * min(DELTAX,DELTAY) / maxvp
     NT = int( tlen / DELTAT)
 
-    print *, 'DELTAX = ', DELTAX
-    print *, 'DELTAY = ', DELTAY
-    print *, 'DELTAT = ', DELTAT
-
-    print *, 'NX = ', NX
-    print *, 'NY = ', NY
-    print *, 'NT = ', NT
-    call output_parameter
+!
+!    call print_conditions
 
     if (need_waveform) then
 
@@ -193,6 +187,17 @@ program main2d
 
 
 contains
+
+    subroutine print_conditions
+        print *, 'DELTAX = ', DELTAX
+        print *, 'DELTAY = ', DELTAY
+        print *, 'DELTAT = ', DELTAT
+
+        print *, 'NX = ', NX
+        print *, 'NY = ', NY
+        print *, 'NT = ', NT
+        call output_parameter
+    end subroutine print_conditions
 
     !##################################################################################
     subroutine allocate_main
@@ -437,8 +442,6 @@ contains
     end subroutine
 
     !##################################################################################
-
-
 
     subroutine set_reciever_interpolating_function&
         ( NX,NY,num_rec,DELTAX,DELTAY,X_rec,Y_rec,NX_rec,NY_rec,inpo_rec )
