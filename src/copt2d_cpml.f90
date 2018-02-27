@@ -6,1127 +6,1130 @@
 ! Description : Procedure for CPML.
 ! ============================================================================
 module copt2d_cpml
-  implicit none
-!----------------valuables for CPML-------------------------------------
+    implicit none
+    !----------------valuables for CPML-------------------------------------
 
-  double precision, allocatable, dimension(:) :: &
-    a1_lef, a1_rig, a1_btm, b1_lef, b1_rig, b1_btm, &
-    a2_lef, a2_rig, a2_btm, b2_lef, b2_rig, b2_btm
+    double precision, allocatable, dimension(:) :: &
+        a1_lef, a1_rig, a1_btm, b1_lef, b1_rig, b1_btm, &
+        a2_lef, a2_rig, a2_btm, b2_lef, b2_rig, b2_btm
 
-  double precision, allocatable, dimension(:,:) :: &
-    dux_dx_lef, duy_dx_lef, dux_dx_rig, duy_dx_rig, dux_dy_btm, duy_dy_btm, &
-    dTxx_dx_lef, dTyx_dx_lef, dTxx_dx_rig, dTyx_dx_rig, dTxy_dy_btm, dTyy_dy_btm
+    double precision, allocatable, dimension(:,:) :: &
+        dux_dx_lef, duy_dx_lef, dux_dx_rig, duy_dx_rig, dux_dy_btm, duy_dy_btm, &
+        dTxx_dx_lef, dTyx_dx_lef, dTxx_dx_rig, dTyx_dx_rig, dTxy_dy_btm, dTyy_dy_btm
 
-  double precision, allocatable, dimension(:,:) :: &
-    mem1_xx_lef, mem1_xy_lef, mem1_xx_rig, mem1_xy_rig, mem1_yx_btm, mem1_yy_btm, &
-    mem2_xx_lef, mem2_xy_lef, mem2_xx_rig, mem2_xy_rig, mem2_yx_btm, mem2_yy_btm
+    double precision, allocatable, dimension(:,:) :: &
+        mem1_xx_lef, mem1_xy_lef, mem1_xx_rig, mem1_xy_rig, mem1_yx_btm, mem1_yy_btm, &
+        mem2_xx_lef, mem2_xy_lef, mem2_xx_rig, mem2_xy_rig, mem2_yx_btm, mem2_yy_btm
 
-  double precision, allocatable, dimension(:,:) :: &
-    corr_dux_dx_lef, corr_duy_dx_lef, corr_dux_dx_rig, corr_duy_dx_rig, &
-    corr_dux_dy_btm, corr_duy_dy_btm, corr_dTxx_dx_lef, corr_dTyx_dx_lef, &
-    corr_dTxx_dx_rig, corr_dTyx_dx_rig, corr_dTxy_dy_btm, corr_dTyy_dy_btm
+    double precision, allocatable, dimension(:,:) :: &
+        corr_dux_dx_lef, corr_duy_dx_lef, corr_dux_dx_rig, corr_duy_dx_rig, &
+        corr_dux_dy_btm, corr_duy_dy_btm, corr_dTxx_dx_lef, corr_dTyx_dx_lef, &
+        corr_dTxx_dx_rig, corr_dTyx_dx_rig, corr_dTxy_dy_btm, corr_dTyy_dy_btm
 
-  double precision,  allocatable, dimension(:,:):: &
-    corr_mem1_xx_lef, corr_mem1_xy_lef, corr_mem1_xx_rig, &
-    corr_mem1_xy_rig, corr_mem1_yx_btm, corr_mem1_yy_btm, &
-    corr_mem2_xx_lef, corr_mem2_xy_lef, corr_mem2_xx_rig, &
-    corr_mem2_xy_rig, corr_mem2_yx_btm, corr_mem2_yy_btm
+    double precision,  allocatable, dimension(:,:):: &
+        corr_mem1_xx_lef, corr_mem1_xy_lef, corr_mem1_xx_rig, &
+        corr_mem1_xy_rig, corr_mem1_yx_btm, corr_mem1_yy_btm, &
+        corr_mem2_xx_lef, corr_mem2_xy_lef, corr_mem2_xx_rig, &
+        corr_mem2_xy_rig, corr_mem2_yx_btm, corr_mem2_yy_btm
 
 !-----------END CPML--------------------------------------------------------
 
 contains
 
-  subroutine allocate_cpml(NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm)
-    implicit none
-    integer, intent(in) :: NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm
-    !----------------valuables for CPML-------------------------------------
-    allocate (a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm))
-    allocate (b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm))
-    allocate (a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm))
-    allocate (b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm))
-
-    allocate (dux_dx_lef(NX_CPML_lef,0:NY))
-    allocate (duy_dx_lef(NX_CPML_lef,0:NY))
-    allocate (dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (dux_dy_btm(0:NX,NY_CPML_btm))
-    allocate (duy_dy_btm(0:NX,NY_CPML_btm))
-    allocate (dTxx_dx_lef(0:NX_CPML_lef,0:NY))
-    allocate (dTyx_dx_lef(0:NX_CPML_lef,0:NY))
-    allocate (dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (dTxy_dy_btm(0:NX,0:NY_CPML_btm))
-    allocate (dTyy_dy_btm(0:NX,0:NY_CPML_btm))
-
-    allocate (mem1_xx_lef(NX_CPML_lef,0:NY))
-    allocate (mem1_xy_lef(NX_CPML_lef,0:NY))
-    allocate (mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (mem1_yx_btm(0:NX,NY_CPML_btm))
-    allocate (mem1_yy_btm(0:NX,NY_CPML_btm))
-    allocate (mem2_xx_lef(0:NX_CPML_lef,0:NY))
-    allocate (mem2_xy_lef(0:NX_CPML_lef,0:NY))
-    allocate (mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (mem2_yx_btm(0:NX,0:NY_CPML_btm))
-    allocate (mem2_yy_btm(0:NX,0:NY_CPML_btm))
-
-    allocate (corr_dux_dx_lef(NX_CPML_lef,0:NY))
-    allocate (corr_duy_dx_lef(NX_CPML_lef,0:NY))
-    allocate (corr_dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (corr_duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (corr_dux_dy_btm(0:NX,NY_CPML_btm))
-    allocate (corr_duy_dy_btm(0:NX,NY_CPML_btm))
-    allocate (corr_dTxx_dx_lef(0:NX_CPML_lef,0:NY))
-    allocate (corr_dTyx_dx_lef(0:NX_CPML_lef,0:NY))
-    allocate (corr_dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (corr_dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (corr_dTxy_dy_btm(0:NX,0:NY_CPML_btm))
-    allocate (corr_dTyy_dy_btm(0:NX,0:NY_CPML_btm))
-
-    allocate (corr_mem1_xx_lef(NX_CPML_lef,0:NY))
-    allocate (corr_mem1_xy_lef(NX_CPML_lef,0:NY))
-    allocate (corr_mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (corr_mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
-    allocate (corr_mem1_yx_btm(0:NX,NY_CPML_btm))
-    allocate (corr_mem1_yy_btm(0:NX,NY_CPML_btm))
-    allocate (corr_mem2_xx_lef(0:NX_CPML_lef,0:NY))
-    allocate (corr_mem2_xy_lef(0:NX_CPML_lef,0:NY))
-    allocate (corr_mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (corr_mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
-    allocate (corr_mem2_yx_btm(0:NX,0:NY_CPML_btm))
-    allocate (corr_mem2_yy_btm(0:NX,0:NY_CPML_btm))
-
-    dux_dx_lef = 0.d0
-    duy_dx_lef = 0.d0
-    dux_dx_rig = 0.d0
-    duy_dx_rig = 0.d0
-    dux_dy_btm = 0.d0
-    duy_dy_btm = 0.d0
-    dTxx_dx_lef = 0.d0
-    dTyx_dx_lef = 0.d0
-    dTxx_dx_rig = 0.d0
-    dTyx_dx_rig = 0.d0
-    dTxy_dy_btm = 0.d0
-    dTyy_dy_btm = 0.d0
-    mem1_xx_lef = 0.d0
-    mem1_xy_lef = 0.d0
-    mem1_xx_rig = 0.d0
-    mem1_xy_rig = 0.d0
-    mem1_yx_btm = 0.d0
-    mem1_yy_btm = 0.d0
-    mem2_xx_lef = 0.d0
-    mem2_xy_lef = 0.d0
-    mem2_xx_rig = 0.d0
-    mem2_xy_rig = 0.d0
-    mem2_yx_btm = 0.d0
-    mem2_yy_btm = 0.d0
-
-    corr_dux_dx_lef = 0.d0
-    corr_duy_dx_lef = 0.d0
-    corr_dux_dx_rig = 0.d0
-    corr_duy_dx_rig = 0.d0
-    corr_dux_dy_btm = 0.d0
-    corr_duy_dy_btm = 0.d0
-    corr_dTxx_dx_lef = 0.d0
-    corr_dTyx_dx_lef = 0.d0
-    corr_dTxx_dx_rig = 0.d0
-    corr_dTyx_dx_rig = 0.d0
-    corr_dTxy_dy_btm = 0.d0
-    corr_dTyy_dy_btm = 0.d0
-    corr_mem1_xx_lef = 0.d0
-    corr_mem1_xy_lef = 0.d0
-    corr_mem1_xx_rig = 0.d0
-    corr_mem1_xy_rig = 0.d0
-    corr_mem1_yx_btm = 0.d0
-    corr_mem1_yy_btm = 0.d0
-    corr_mem2_xx_lef = 0.d0
-    corr_mem2_xy_lef = 0.d0
-    corr_mem2_xx_rig = 0.d0
-    corr_mem2_xy_rig = 0.d0
-    corr_mem2_yx_btm = 0.d0
-    corr_mem2_yy_btm = 0.d0
+    subroutine allocate_cpml(NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm)
+        integer, intent(in) :: NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm
+        !----------------valuables for CPML-------------------------------------
+        allocate (a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm))
+        allocate (b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm))
+        allocate (a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm))
+        allocate (b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm))
+
+        allocate (dux_dx_lef(NX_CPML_lef,0:NY))
+        allocate (duy_dx_lef(NX_CPML_lef,0:NY))
+        allocate (dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (dux_dy_btm(0:NX,NY_CPML_btm))
+        allocate (duy_dy_btm(0:NX,NY_CPML_btm))
+        allocate (dTxx_dx_lef(0:NX_CPML_lef,0:NY))
+        allocate (dTyx_dx_lef(0:NX_CPML_lef,0:NY))
+        allocate (dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (dTxy_dy_btm(0:NX,0:NY_CPML_btm))
+        allocate (dTyy_dy_btm(0:NX,0:NY_CPML_btm))
+
+        allocate (mem1_xx_lef(NX_CPML_lef,0:NY))
+        allocate (mem1_xy_lef(NX_CPML_lef,0:NY))
+        allocate (mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (mem1_yx_btm(0:NX,NY_CPML_btm))
+        allocate (mem1_yy_btm(0:NX,NY_CPML_btm))
+        allocate (mem2_xx_lef(0:NX_CPML_lef,0:NY))
+        allocate (mem2_xy_lef(0:NX_CPML_lef,0:NY))
+        allocate (mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (mem2_yx_btm(0:NX,0:NY_CPML_btm))
+        allocate (mem2_yy_btm(0:NX,0:NY_CPML_btm))
+
+        allocate (corr_dux_dx_lef(NX_CPML_lef,0:NY))
+        allocate (corr_duy_dx_lef(NX_CPML_lef,0:NY))
+        allocate (corr_dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (corr_duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (corr_dux_dy_btm(0:NX,NY_CPML_btm))
+        allocate (corr_duy_dy_btm(0:NX,NY_CPML_btm))
+        allocate (corr_dTxx_dx_lef(0:NX_CPML_lef,0:NY))
+        allocate (corr_dTyx_dx_lef(0:NX_CPML_lef,0:NY))
+        allocate (corr_dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (corr_dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (corr_dTxy_dy_btm(0:NX,0:NY_CPML_btm))
+        allocate (corr_dTyy_dy_btm(0:NX,0:NY_CPML_btm))
+
+        allocate (corr_mem1_xx_lef(NX_CPML_lef,0:NY))
+        allocate (corr_mem1_xy_lef(NX_CPML_lef,0:NY))
+        allocate (corr_mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (corr_mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY))
+        allocate (corr_mem1_yx_btm(0:NX,NY_CPML_btm))
+        allocate (corr_mem1_yy_btm(0:NX,NY_CPML_btm))
+        allocate (corr_mem2_xx_lef(0:NX_CPML_lef,0:NY))
+        allocate (corr_mem2_xy_lef(0:NX_CPML_lef,0:NY))
+        allocate (corr_mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (corr_mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY))
+        allocate (corr_mem2_yx_btm(0:NX,0:NY_CPML_btm))
+        allocate (corr_mem2_yy_btm(0:NX,0:NY_CPML_btm))
+
+        dux_dx_lef = 0.d0
+        duy_dx_lef = 0.d0
+        dux_dx_rig = 0.d0
+        duy_dx_rig = 0.d0
+        dux_dy_btm = 0.d0
+        duy_dy_btm = 0.d0
+        dTxx_dx_lef = 0.d0
+        dTyx_dx_lef = 0.d0
+        dTxx_dx_rig = 0.d0
+        dTyx_dx_rig = 0.d0
+        dTxy_dy_btm = 0.d0
+        dTyy_dy_btm = 0.d0
+        mem1_xx_lef = 0.d0
+        mem1_xy_lef = 0.d0
+        mem1_xx_rig = 0.d0
+        mem1_xy_rig = 0.d0
+        mem1_yx_btm = 0.d0
+        mem1_yy_btm = 0.d0
+        mem2_xx_lef = 0.d0
+        mem2_xy_lef = 0.d0
+        mem2_xx_rig = 0.d0
+        mem2_xy_rig = 0.d0
+        mem2_yx_btm = 0.d0
+        mem2_yy_btm = 0.d0
+
+        corr_dux_dx_lef = 0.d0
+        corr_duy_dx_lef = 0.d0
+        corr_dux_dx_rig = 0.d0
+        corr_duy_dx_rig = 0.d0
+        corr_dux_dy_btm = 0.d0
+        corr_duy_dy_btm = 0.d0
+        corr_dTxx_dx_lef = 0.d0
+        corr_dTyx_dx_lef = 0.d0
+        corr_dTxx_dx_rig = 0.d0
+        corr_dTyx_dx_rig = 0.d0
+        corr_dTxy_dy_btm = 0.d0
+        corr_dTyy_dy_btm = 0.d0
+        corr_mem1_xx_lef = 0.d0
+        corr_mem1_xy_lef = 0.d0
+        corr_mem1_xx_rig = 0.d0
+        corr_mem1_xy_rig = 0.d0
+        corr_mem1_yx_btm = 0.d0
+        corr_mem1_yy_btm = 0.d0
+        corr_mem2_xx_lef = 0.d0
+        corr_mem2_xy_lef = 0.d0
+        corr_mem2_xx_rig = 0.d0
+        corr_mem2_xy_rig = 0.d0
+        corr_mem2_yx_btm = 0.d0
+        corr_mem2_yy_btm = 0.d0
 
-  end subroutine allocate_cpml
+    end subroutine allocate_cpml
 
 
 
-  subroutine compt_inverse_diagonal_mass&
-    ( NX,NY,MASK1Y,MASK2X,rho,DELTAT,INV_MASS )
+    subroutine compt_inverse_diagonal_mass&
+        ( NX,NY,MASK1Y,MASK2X,rho,DELTAT,INV_MASS )
 
-    integer, intent(in) :: &
-      NX, NY, &
-      MASK1Y(0:NX,NY), MASK2X(NX,NY)
+        integer, intent(in) :: &
+            NX, NY, &
+            MASK1Y(0:NX,NY), MASK2X(NX,NY)
 
-    double precision, intent(in) :: &
-      rho(NX,NY), DELTAT
+        double precision, intent(in) :: &
+            rho(NX,NY), DELTAT
 
-    double precision, intent(out) :: &
-      INV_MASS(0:NX,0:NY)
+        double precision, intent(out) :: &
+            INV_MASS(0:NX,0:NY)
 
-    double precision :: &
-      tmp(0:NX,NY), E(3), Ec(2)
+        double precision :: &
+            tmp(0:NX,NY), E(3), Ec(2)
 
-    integer :: i, j
+        integer :: i, j
 
-    E = (/ 5.d0, 8.d0, -1.d0 /) / 12.d0
-    Ec = (/ 1.d0, 1.d0 /) / 2.d0
+        E = (/ 5.d0, 8.d0, -1.d0 /) / 12.d0
+        Ec = (/ 1.d0, 1.d0 /) / 2.d0
 
-    tmp = 0.d0
-    INV_MASS = 0.d0
+        tmp = 0.d0
+        INV_MASS = 0.d0
 
-    do j = 1,NY
-    do i = 1,NX
+        do j = 1,NY
+            do i = 1,NX
 
-      if ( MASK2X(i,j) == 2 ) then
+                if ( MASK2X(i,j) == 2 ) then
 
-        tmp(i-1:i+1,j) = tmp(i-1:i+1,j) + rho(i,j) * E
+                    tmp(i-1:i+1,j) = tmp(i-1:i+1,j) + rho(i,j) * E
 
-      elseif ( MASK2X(i,j) == 1 ) then
+                elseif ( MASK2X(i,j) == 1 ) then
 
-        tmp(i-1:i,j) = tmp(i-1:i,j) + rho(i,j) * Ec
+                    tmp(i-1:i,j) = tmp(i-1:i,j) + rho(i,j) * Ec
 
-      endif
+                endif
 
-    enddo
-    enddo
+            enddo
+        enddo
 
-    do j = 1,NY
-    do i = 0,NX
-
-      if ( MASK1Y(i,j) == 2 ) then
-
-        INV_MASS(i,j-1:j+1) = INV_MASS(i,j-1:j+1) + tmp(i,j) * E
-
-      elseif ( MASK1Y(i,j) == 1 ) then
-
-        INV_MASS(i,j-1:j) = INV_MASS(i,j-1:j) + tmp(i,j) * Ec
+        do j = 1,NY
+            do i = 0,NX
 
-      endif
+                if ( MASK1Y(i,j) == 2 ) then
+
+                    INV_MASS(i,j-1:j+1) = INV_MASS(i,j-1:j+1) + tmp(i,j) * E
+
+                elseif ( MASK1Y(i,j) == 1 ) then
+
+                    INV_MASS(i,j-1:j) = INV_MASS(i,j-1:j) + tmp(i,j) * Ec
 
-    enddo
-    enddo
+                endif
 
-    do j = 0,NY
-    do i = 0,NX
-
-      if ( INV_MASS(i,j) > 1.d-10 ) &
-        INV_MASS(i,j) = DELTAT * DELTAT / INV_MASS(i,j)
-
-    enddo
-    enddo
-
-  end subroutine
-
-!##################################################################################
-
-  subroutine compt_corrector_force&
-    ( NX,NY,MASK1X,MASK1Y,MASK2X,MASK2Y,ux,uy,C,rho,DELTAT,DELTAX,DELTAY, &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
-      a1_lef, a1_rig, a1_btm, &
-      b1_lef, b1_rig, b1_btm, &
-      a2_lef, a2_rig, a2_btm, &
-      b2_lef, b2_rig, b2_btm, &
-      dux_dx_lef, duy_dx_lef, &
-      dux_dx_rig, duy_dx_rig, &
-      dux_dy_btm, duy_dy_btm, &
-      dTxx_dx_lef, dTyx_dx_lef, &
-      dTxx_dx_rig, dTyx_dx_rig, &
-      dTxy_dy_btm, dTyy_dy_btm, &
-      mem1_xx_lef, mem1_xy_lef, &
-      mem1_xx_rig, mem1_xy_rig, &
-      mem1_yx_btm, mem1_yy_btm, &
-      mem2_xx_lef, mem2_xy_lef, &
-      mem2_xx_rig, mem2_xy_rig, &
-      mem2_yx_btm, mem2_yy_btm, &
-      Hux,Huy )
+            enddo
+        enddo
 
-    integer, intent(in) :: &
-      NX, NY, &
-      MASK1X(NX,0:NY), MASK1Y(0:NX,NY), &
-      MASK2X(NX,NY), MASK2Y(NX,NY)
+        do j = 0,NY
+            do i = 0,NX
 
-    double precision, intent(in) :: &
-      ux(0:NX,0:NY), uy(0:NX,0:NY), &
-      C(3,3,NX,NY), rho(NX,NY), &
-      DELTAT, DELTAX, DELTAY
+                if ( INV_MASS(i,j) > 1.d-10 ) &
+                    INV_MASS(i,j) = DELTAT * DELTAT / INV_MASS(i,j)
+
+            enddo
+        enddo
+
+    end subroutine
+
+    !##################################################################################
+
+    subroutine compt_corrector_force&
+        ( NX,NY,MASK1X,MASK1Y,MASK2X,MASK2Y,ux,uy,C,rho,DELTAT,DELTAX,DELTAY, &
+        NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
+        a1_lef, a1_rig, a1_btm, &
+        b1_lef, b1_rig, b1_btm, &
+        a2_lef, a2_rig, a2_btm, &
+        b2_lef, b2_rig, b2_btm, &
+        dux_dx_lef, duy_dx_lef, &
+        dux_dx_rig, duy_dx_rig, &
+        dux_dy_btm, duy_dy_btm, &
+        dTxx_dx_lef, dTyx_dx_lef, &
+        dTxx_dx_rig, dTyx_dx_rig, &
+        dTxy_dy_btm, dTyy_dy_btm, &
+        mem1_xx_lef, mem1_xy_lef, &
+        mem1_xx_rig, mem1_xy_rig, &
+        mem1_yx_btm, mem1_yy_btm, &
+        mem2_xx_lef, mem2_xy_lef, &
+        mem2_xx_rig, mem2_xy_rig, &
+        mem2_yx_btm, mem2_yy_btm, &
+        Hux,Huy )
 
+        integer, intent(in) :: &
+            NX, NY, &
+            MASK1X(NX,0:NY), MASK1Y(0:NX,NY), &
+            MASK2X(NX,NY), MASK2Y(NX,NY)
 
-!----------------valuables for CPML-------------------------------------
-    integer, intent(in) :: &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
+        double precision, intent(in) :: &
+            ux(0:NX,0:NY), uy(0:NX,0:NY), &
+            C(3,3,NX,NY), rho(NX,NY), &
+            DELTAT, DELTAX, DELTAY
 
-    double precision, intent(in) :: &
-      a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
-      b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
-      a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
-      b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
 
-    double precision, intent(inout) :: &
-      dux_dx_lef(NX_CPML_lef,0:NY), &
-      duy_dx_lef(NX_CPML_lef,0:NY), &
-      dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      dux_dy_btm(0:NX,NY_CPML_btm), &
-      duy_dy_btm(0:NX,NY_CPML_btm), &
-      dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
-      dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
-      dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
-      dTyy_dy_btm(0:NX,0:NY_CPML_btm)
+        !----------------valuables for CPML-------------------------------------
+        integer, intent(in) :: &
+            NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
 
-    double precision :: &
-      dTxx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
-      dTyx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
-      dTxx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
-      dTyx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
-      dTxy_dy_btm_tmp(0:NX,0:NY_CPML_btm), &
-      dTyy_dy_btm_tmp(0:NX,0:NY_CPML_btm)
+        double precision, intent(in) :: &
+            a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
+            b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
+            a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
+            b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
 
-    double precision, intent(inout) :: &
-      mem1_xx_lef(NX_CPML_lef,0:NY), &
-      mem1_xy_lef(NX_CPML_lef,0:NY), &
-      mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      mem1_yx_btm(0:NX,NY_CPML_btm), &
-      mem1_yy_btm(0:NX,NY_CPML_btm), &
-      mem2_xx_lef(0:NX_CPML_lef,0:NY), &
-      mem2_xy_lef(0:NX_CPML_lef,0:NY), &
-      mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
-      mem2_yx_btm(0:NX,0:NY_CPML_btm), &
-      mem2_yy_btm(0:NX,0:NY_CPML_btm)
+        double precision, intent(inout) :: &
+            dux_dx_lef(NX_CPML_lef,0:NY), &
+            duy_dx_lef(NX_CPML_lef,0:NY), &
+            dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            dux_dy_btm(0:NX,NY_CPML_btm), &
+            duy_dy_btm(0:NX,NY_CPML_btm), &
+            dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
+            dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
+            dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
+            dTyy_dy_btm(0:NX,0:NY_CPML_btm)
 
-!-----------END--------------------------------------------------------
+        double precision :: &
+            dTxx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
+            dTyx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
+            dTxx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
+            dTyx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
+            dTxy_dy_btm_tmp(0:NX,0:NY_CPML_btm), &
+            dTyy_dy_btm_tmp(0:NX,0:NY_CPML_btm)
 
+        double precision, intent(inout) :: &
+            mem1_xx_lef(NX_CPML_lef,0:NY), &
+            mem1_xy_lef(NX_CPML_lef,0:NY), &
+            mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            mem1_yx_btm(0:NX,NY_CPML_btm), &
+            mem1_yy_btm(0:NX,NY_CPML_btm), &
+            mem2_xx_lef(0:NX_CPML_lef,0:NY), &
+            mem2_xy_lef(0:NX_CPML_lef,0:NY), &
+            mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
+            mem2_yx_btm(0:NX,0:NY_CPML_btm), &
+            mem2_yy_btm(0:NX,0:NY_CPML_btm)
 
-    double precision, intent(out) :: &
-      Hux(0:NX,0:NY), Huy(0:NX,0:NY)
+        !-----------END--------------------------------------------------------
 
-    double precision :: &
-      tmp1_xx(NX,0:NY), tmp1_xy(NX,0:NY), &
-      tmp1_yx(0:NX,NY), tmp1_yy(0:NX,NY), &
-      tmp2_xx(NX,0:NY), tmp2_xy(NX,0:NY), &
-      tmp2_yx(0:NX,NY), tmp2_yy(0:NX,NY), tmp3, &
-      Pxx, Pxy, Pyx, Pyy, &
-      Qxx, Qxy, Qyx, Qyy, &
-      sgm_xx, sgm_xy, sgm_yx, sgm_yy, &
-      gmm_xx, gmm_xy, gmm_yx, gmm_yy, &
-      dx2_dt2, dy2_dt2
 
-    double precision :: &
-      E(2), F(2), Delx(2), Dely(2)
+        double precision, intent(out) :: &
+            Hux(0:NX,0:NY), Huy(0:NX,0:NY)
 
-    integer :: i, j
+        double precision :: &
+            tmp1_xx(NX,0:NY), tmp1_xy(NX,0:NY), &
+            tmp1_yx(0:NX,NY), tmp1_yy(0:NX,NY), &
+            tmp2_xx(NX,0:NY), tmp2_xy(NX,0:NY), &
+            tmp2_yx(0:NX,NY), tmp2_yy(0:NX,NY), tmp3, &
+            Pxx, Pxy, Pyx, Pyy, &
+            Qxx, Qxy, Qyx, Qyy, &
+            sgm_xx, sgm_xy, sgm_yx, sgm_yy, &
+            gmm_xx, gmm_xy, gmm_yx, gmm_yy, &
+            dx2_dt2, dy2_dt2
 
-    E = (/ 1.d0, 1.d0 /) / 2.d0
-    F = (/ 1.d0, -1.d0 /) / 2.d0
-    Delx = (/ -1.d0, 1.d0 /) / DELTAX
-    Dely = (/ -1.d0, 1.d0 /) / DELTAY
+        double precision :: &
+            E(2), F(2), Delx(2), Dely(2)
 
-    Hux = 0.d0
-    Huy = 0.d0
+        integer :: i, j
 
-    tmp2_xx = 0.d0
-    tmp2_xy = 0.d0
-    tmp2_yx = 0.d0
-    tmp2_yy = 0.d0
+        E = (/ 1.d0, 1.d0 /) / 2.d0
+        F = (/ 1.d0, -1.d0 /) / 2.d0
+        Delx = (/ -1.d0, 1.d0 /) / DELTAX
+        Dely = (/ -1.d0, 1.d0 /) / DELTAY
 
-    dx2_dt2 = DELTAX * DELTAX / DELTAT / DELTAT
-    dy2_dt2 = DELTAY * DELTAY / DELTAT / DELTAT
+        Hux = 0.d0
+        Huy = 0.d0
 
-    do j = 0,NY
-    do i = 1,NX
+        tmp2_xx = 0.d0
+        tmp2_xy = 0.d0
+        tmp2_yx = 0.d0
+        tmp2_yy = 0.d0
 
-      if ( MASK1X(i,j) /= 0 ) then
+        dx2_dt2 = DELTAX * DELTAX / DELTAT / DELTAT
+        dy2_dt2 = DELTAY * DELTAY / DELTAT / DELTAT
 
-        tmp1_xx(i,j) = dot_product( Delx, ux(i-1:i,j) )
-        tmp1_xy(i,j) = dot_product( Delx, uy(i-1:i,j) )
+        do j = 0,NY
+            do i = 1,NX
 
-      else
+                if ( MASK1X(i,j) /= 0 ) then
 
-        tmp1_xx(i,j) = 0.d0
-        tmp1_xy(i,j) = 0.d0
+                    tmp1_xx(i,j) = dot_product( Delx, ux(i-1:i,j) )
+                    tmp1_xy(i,j) = dot_product( Delx, uy(i-1:i,j) )
 
-      endif
+                else
 
-!-----------implement CPML for x-axis-----------------------------------
+                    tmp1_xx(i,j) = 0.d0
+                    tmp1_xy(i,j) = 0.d0
 
-      if ( i <= NX_CPML_lef ) then
+                endif
 
-        mem1_xx_lef(i,j) = a1_lef(i) * mem1_xx_lef(i,j) + b1_lef(i) * ( tmp1_xx(i,j) + dux_dx_lef(i,j) )
-        mem1_xy_lef(i,j) = a1_lef(i) * mem1_xy_lef(i,j) + b1_lef(i) * ( tmp1_xy(i,j) + duy_dx_lef(i,j) )
+                !-----------implement CPML for x-axis-----------------------------------
 
-        dux_dx_lef(i,j) = tmp1_xx(i,j)
-        duy_dx_lef(i,j) = tmp1_xy(i,j)
+                if ( i <= NX_CPML_lef ) then
 
-        tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_lef(i,j)
-        tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_lef(i,j)
+                    mem1_xx_lef(i,j) = a1_lef(i) * mem1_xx_lef(i,j) + b1_lef(i) * ( tmp1_xx(i,j) + dux_dx_lef(i,j) )
+                    mem1_xy_lef(i,j) = a1_lef(i) * mem1_xy_lef(i,j) + b1_lef(i) * ( tmp1_xy(i,j) + duy_dx_lef(i,j) )
 
-      elseif ( i > NX - NX_CPML_rig  ) then
+                    dux_dx_lef(i,j) = tmp1_xx(i,j)
+                    duy_dx_lef(i,j) = tmp1_xy(i,j)
 
-        mem1_xx_rig(i,j) = a1_rig(i) * mem1_xx_rig(i,j) + b1_rig(i) * ( tmp1_xx(i,j) + dux_dx_rig(i,j) )
-        mem1_xy_rig(i,j) = a1_rig(i) * mem1_xy_rig(i,j) + b1_rig(i) * ( tmp1_xy(i,j) + duy_dx_rig(i,j) )
+                    tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_lef(i,j)
+                    tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_lef(i,j)
 
-        dux_dx_rig(i,j) = tmp1_xx(i,j)
-        duy_dx_rig(i,j) = tmp1_xy(i,j)
+                elseif ( i > NX - NX_CPML_rig  ) then
 
-        tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_rig(i,j)
-        tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_rig(i,j)
+                    mem1_xx_rig(i,j) = a1_rig(i) * mem1_xx_rig(i,j) + b1_rig(i) * ( tmp1_xx(i,j) + dux_dx_rig(i,j) )
+                    mem1_xy_rig(i,j) = a1_rig(i) * mem1_xy_rig(i,j) + b1_rig(i) * ( tmp1_xy(i,j) + duy_dx_rig(i,j) )
 
-      endif
+                    dux_dx_rig(i,j) = tmp1_xx(i,j)
+                    duy_dx_rig(i,j) = tmp1_xy(i,j)
 
-!---------------END----------------------------------------------------
+                    tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_rig(i,j)
+                    tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_rig(i,j)
 
-    enddo
-    enddo
+                endif
 
-    do j = 1,NY
-    do i = 0,NX
+            !---------------END----------------------------------------------------
 
-      if ( MASK1Y(i,j) /= 0 ) then
+            enddo
+        enddo
 
-        tmp1_yx(i,j) = dot_product( Dely, ux(i,j-1:j) )
-        tmp1_yy(i,j) = dot_product( Dely, uy(i,j-1:j) )
+        do j = 1,NY
+            do i = 0,NX
 
-      else
+                if ( MASK1Y(i,j) /= 0 ) then
 
-        tmp1_yx(i,j) = 0.d0
-        tmp1_yy(i,j) = 0.d0
+                    tmp1_yx(i,j) = dot_product( Dely, ux(i,j-1:j) )
+                    tmp1_yy(i,j) = dot_product( Dely, uy(i,j-1:j) )
 
-      endif
+                else
 
-!------------------implement CPML for y-axis----------------------------
-      if ( j <= NY_CPML_btm ) then
+                    tmp1_yx(i,j) = 0.d0
+                    tmp1_yy(i,j) = 0.d0
 
-        mem1_yx_btm(i,j) = a1_btm(j) * mem1_yx_btm(i,j) + b1_btm(j) * ( tmp1_yx(i,j) + dux_dy_btm(i,j) )
-        mem1_yy_btm(i,j) = a1_btm(j) * mem1_yy_btm(i,j) + b1_btm(j) * ( tmp1_yy(i,j) + duy_dy_btm(i,j) )
+                endif
 
-        dux_dy_btm(i,j) = tmp1_yx(i,j)
-        duy_dy_btm(i,j) = tmp1_yy(i,j)
+                !------------------implement CPML for y-axis----------------------------
+                if ( j <= NY_CPML_btm ) then
 
-        tmp1_yx(i,j) = tmp1_yx(i,j) + mem1_yx_btm(i,j)
-        tmp1_yy(i,j) = tmp1_yy(i,j) + mem1_yy_btm(i,j)
+                    mem1_yx_btm(i,j) = a1_btm(j) * mem1_yx_btm(i,j) + b1_btm(j) * ( tmp1_yx(i,j) + dux_dy_btm(i,j) )
+                    mem1_yy_btm(i,j) = a1_btm(j) * mem1_yy_btm(i,j) + b1_btm(j) * ( tmp1_yy(i,j) + duy_dy_btm(i,j) )
 
-      endif
+                    dux_dy_btm(i,j) = tmp1_yx(i,j)
+                    duy_dy_btm(i,j) = tmp1_yy(i,j)
 
-!---------------END-----------------------------------------------------
+                    tmp1_yx(i,j) = tmp1_yx(i,j) + mem1_yx_btm(i,j)
+                    tmp1_yy(i,j) = tmp1_yy(i,j) + mem1_yy_btm(i,j)
 
-    enddo
-    enddo
+                endif
 
-    do j = 1,NY
-    do i = 1,NX
+            !---------------END-----------------------------------------------------
 
-      if ( MASK2Y(i,j) /= 0 ) then
+            enddo
+        enddo
 
-        Pxx = dot_product( E, tmp1_xx(i,j-1:j) ) / 12.d0
-        Pxy = dot_product( E, tmp1_xy(i,j-1:j) ) / 12.d0
-        Qxx = dot_product( F, tmp1_xx(i,j-1:j) ) / 12.d0
-        Qxy = dot_product( F, tmp1_xy(i,j-1:j) ) / 12.d0
+        do j = 1,NY
+            do i = 1,NX
 
-      else
+                if ( MASK2Y(i,j) /= 0 ) then
 
-        Pxx = 0.d0
-        Pxy = 0.d0
-        Qxx = 0.d0
-        Qxy = 0.d0
+                    Pxx = dot_product( E, tmp1_xx(i,j-1:j) ) / 12.d0
+                    Pxy = dot_product( E, tmp1_xy(i,j-1:j) ) / 12.d0
+                    Qxx = dot_product( F, tmp1_xx(i,j-1:j) ) / 12.d0
+                    Qxy = dot_product( F, tmp1_xy(i,j-1:j) ) / 12.d0
 
-      endif
+                else
 
-      if ( MASK2X(i,j) /= 0 ) then
+                    Pxx = 0.d0
+                    Pxy = 0.d0
+                    Qxx = 0.d0
+                    Qxy = 0.d0
 
-        Pyx = dot_product( E, tmp1_yx(i-1:i,j) ) / 12.d0
-        Pyy = dot_product( E, tmp1_yy(i-1:i,j) ) / 12.d0
-        Qyx = dot_product( F, tmp1_yx(i-1:i,j) ) / 12.d0
-        Qyy = dot_product( F, tmp1_yy(i-1:i,j) ) / 12.d0
+                endif
 
-      else
+                if ( MASK2X(i,j) /= 0 ) then
 
-        Pxx = 0.d0
-        Pxy = 0.d0
-        Qxx = 0.d0
-        Qxy = 0.d0
+                    Pyx = dot_product( E, tmp1_yx(i-1:i,j) ) / 12.d0
+                    Pyy = dot_product( E, tmp1_yy(i-1:i,j) ) / 12.d0
+                    Qyx = dot_product( F, tmp1_yx(i-1:i,j) ) / 12.d0
+                    Qyy = dot_product( F, tmp1_yy(i-1:i,j) ) / 12.d0
 
-      endif
+                else
 
-      tmp3 = Pxy + Pyx
-      sgm_xx = C(1,1,i,j) * Pxx + C(1,3,i,j) * tmp3 + C(1,2,i,j) * Pyy
-      sgm_yy = C(2,1,i,j) * Pxx + C(2,3,i,j) * tmp3 + C(2,2,i,j) * Pyy
-      tmp3   = C(3,1,i,j) * Pxx + C(3,3,i,j) * tmp3 + C(3,2,i,j) * Pyy
-      gmm_xx = C(1,1,i,j) * Qxx + C(1,3,i,j) * Qxy
-      gmm_xy = C(3,1,i,j) * Qxx + C(3,3,i,j) * Qxy
-      gmm_yx = C(3,3,i,j) * Qyx + C(3,2,i,j) * Qyy
-      gmm_yy = C(2,3,i,j) * Qyx + C(2,2,i,j) * Qyy
+                    Pxx = 0.d0
+                    Pxy = 0.d0
+                    Qxx = 0.d0
+                    Qxy = 0.d0
 
-      sgm_xx = sgm_xx - rho(i,j) * dx2_dt2 * Pxx
-      sgm_xy = tmp3   - rho(i,j) * dx2_dt2 * Pxy
-      sgm_yx = tmp3   - rho(i,j) * dy2_dt2 * Pyx
-      sgm_yy = sgm_yy - rho(i,j) * dy2_dt2 * Pyy
-      gmm_xx = gmm_xx - rho(i,j) * dx2_dt2 * Qxx
-      gmm_xy = gmm_xy - rho(i,j) * dx2_dt2 * Qxy
-      gmm_yx = gmm_yx - rho(i,j) * dy2_dt2 * Qyx
-      gmm_yy = gmm_yy - rho(i,j) * dy2_dt2 * Qyy
+                endif
 
-      if ( MASK2Y(i,j) /= 0 ) then
+                tmp3 = Pxy + Pyx
+                sgm_xx = C(1,1,i,j) * Pxx + C(1,3,i,j) * tmp3 + C(1,2,i,j) * Pyy
+                sgm_yy = C(2,1,i,j) * Pxx + C(2,3,i,j) * tmp3 + C(2,2,i,j) * Pyy
+                tmp3   = C(3,1,i,j) * Pxx + C(3,3,i,j) * tmp3 + C(3,2,i,j) * Pyy
+                gmm_xx = C(1,1,i,j) * Qxx + C(1,3,i,j) * Qxy
+                gmm_xy = C(3,1,i,j) * Qxx + C(3,3,i,j) * Qxy
+                gmm_yx = C(3,3,i,j) * Qyx + C(3,2,i,j) * Qyy
+                gmm_yy = C(2,3,i,j) * Qyx + C(2,2,i,j) * Qyy
 
-        tmp2_xx(i,j-1:j) = tmp2_xx(i,j-1:j) + sgm_xx * E + gmm_xx * F
-        tmp2_xy(i,j-1:j) = tmp2_xy(i,j-1:j) + sgm_xy * E + gmm_xy * F
+                sgm_xx = sgm_xx - rho(i,j) * dx2_dt2 * Pxx
+                sgm_xy = tmp3   - rho(i,j) * dx2_dt2 * Pxy
+                sgm_yx = tmp3   - rho(i,j) * dy2_dt2 * Pyx
+                sgm_yy = sgm_yy - rho(i,j) * dy2_dt2 * Pyy
+                gmm_xx = gmm_xx - rho(i,j) * dx2_dt2 * Qxx
+                gmm_xy = gmm_xy - rho(i,j) * dx2_dt2 * Qxy
+                gmm_yx = gmm_yx - rho(i,j) * dy2_dt2 * Qyx
+                gmm_yy = gmm_yy - rho(i,j) * dy2_dt2 * Qyy
 
-      endif
+                if ( MASK2Y(i,j) /= 0 ) then
 
-      if ( MASK2X(i,j) /= 0 ) then
+                    tmp2_xx(i,j-1:j) = tmp2_xx(i,j-1:j) + sgm_xx * E + gmm_xx * F
+                    tmp2_xy(i,j-1:j) = tmp2_xy(i,j-1:j) + sgm_xy * E + gmm_xy * F
 
-        tmp2_yx(i-1:i,j) = tmp2_yx(i-1:i,j) + sgm_yx * E + gmm_yx * F
-        tmp2_yy(i-1:i,j) = tmp2_yy(i-1:i,j) + sgm_yy * E + gmm_yy * F
+                endif
 
-      endif
+                if ( MASK2X(i,j) /= 0 ) then
 
-    enddo
-    enddo
+                    tmp2_yx(i-1:i,j) = tmp2_yx(i-1:i,j) + sgm_yx * E + gmm_yx * F
+                    tmp2_yy(i-1:i,j) = tmp2_yy(i-1:i,j) + sgm_yy * E + gmm_yy * F
 
-!-----------set valuables for CPML to zero------------------------------------
-    dTxx_dx_lef_tmp = 0.d0
-    dTyx_dx_lef_tmp = 0.d0
-    dTxx_dx_rig_tmp = 0.d0
-    dTyx_dx_rig_tmp = 0.d0
-    dTxy_dy_btm_tmp = 0.d0
-    dTyy_dy_btm_tmp = 0.d0
-!-----------------END--------------------------------------------------------
+                endif
 
-    do j = 0,NY
-    do i = 1,NX
+            enddo
+        enddo
 
-      if ( MASK1X(i,j) /= 0) then
+        !-----------set valuables for CPML to zero------------------------------------
+        dTxx_dx_lef_tmp = 0.d0
+        dTyx_dx_lef_tmp = 0.d0
+        dTxx_dx_rig_tmp = 0.d0
+        dTyx_dx_rig_tmp = 0.d0
+        dTxy_dy_btm_tmp = 0.d0
+        dTyy_dy_btm_tmp = 0.d0
+        !-----------------END--------------------------------------------------------
 
-        Hux(i-1:i,j) = Hux(i-1:i,j) + tmp2_xx(i,j) * Delx
-        Huy(i-1:i,j) = Huy(i-1:i,j) + tmp2_xy(i,j) * Delx
+        do j = 0,NY
+            do i = 1,NX
 
-!-----------implement CPML for x-axis------------------------------------------
-        if ( i <= NX_CPML_lef ) then
+                if ( MASK1X(i,j) /= 0) then
 
-          dTxx_dx_lef_tmp(i-1:i,j) = dTxx_dx_lef_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
-          dTyx_dx_lef_tmp(i-1:i,j) = dTyx_dx_lef_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
+                    Hux(i-1:i,j) = Hux(i-1:i,j) + tmp2_xx(i,j) * Delx
+                    Huy(i-1:i,j) = Huy(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-        elseif ( i > NX - NX_CPML_rig  ) then
+                    !-----------implement CPML for x-axis------------------------------------------
+                    if ( i <= NX_CPML_lef ) then
 
-          dTxx_dx_rig_tmp(i-1:i,j) = dTxx_dx_rig_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
-          dTyx_dx_rig_tmp(i-1:i,j) = dTyx_dx_rig_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
+                        dTxx_dx_lef_tmp(i-1:i,j) = dTxx_dx_lef_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
+                        dTyx_dx_lef_tmp(i-1:i,j) = dTyx_dx_lef_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-        endif
-!-----------------END----------------------------------------------------------
+                    elseif ( i > NX - NX_CPML_rig  ) then
 
-      endif
+                        dTxx_dx_rig_tmp(i-1:i,j) = dTxx_dx_rig_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
+                        dTyx_dx_rig_tmp(i-1:i,j) = dTyx_dx_rig_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-    enddo
-    enddo
+                    endif
+                !-----------------END----------------------------------------------------------
 
-!--------------implement CPML for x-axis--------------------------
+                endif
 
-    do i = 0, NX_CPML_lef
+            enddo
+        enddo
 
-      mem2_xx_lef(i,:) = a2_lef(i) * mem2_xx_lef(i,:) &
-        + b2_lef(i) * ( dTxx_dx_lef_tmp(i,:) + dTxx_dx_lef(i,:) )
+        !--------------implement CPML for x-axis--------------------------
 
-      mem2_xy_lef(i,:) = a2_lef(i) * mem2_xy_lef(i,:) &
-        + b2_lef(i) * ( dTyx_dx_lef_tmp(i,:) + dTyx_dx_lef(i,:) )
+        do i = 0, NX_CPML_lef
 
-      Hux(i,:) = Hux(i,:) + mem2_xx_lef(i,:)
-      Huy(i,:) = Huy(i,:) + mem2_xy_lef(i,:)
+            mem2_xx_lef(i,:) = a2_lef(i) * mem2_xx_lef(i,:) &
+                + b2_lef(i) * ( dTxx_dx_lef_tmp(i,:) + dTxx_dx_lef(i,:) )
 
-    enddo
+            mem2_xy_lef(i,:) = a2_lef(i) * mem2_xy_lef(i,:) &
+                + b2_lef(i) * ( dTyx_dx_lef_tmp(i,:) + dTyx_dx_lef(i,:) )
 
-    dTxx_dx_lef = dTxx_dx_lef_tmp
-    dTyx_dx_lef = dTyx_dx_lef_tmp
+            Hux(i,:) = Hux(i,:) + mem2_xx_lef(i,:)
+            Huy(i,:) = Huy(i,:) + mem2_xy_lef(i,:)
 
-    do i = NX - NX_CPML_rig, NX
+        enddo
 
-      mem2_xx_rig(i,:) = a2_rig(i) * mem2_xx_rig(i,:) &
-        + b2_rig(i) * ( dTxx_dx_rig_tmp(i,:) + dTxx_dx_rig(i,:) )
+        dTxx_dx_lef = dTxx_dx_lef_tmp
+        dTyx_dx_lef = dTyx_dx_lef_tmp
 
-      mem2_xy_rig(i,:) = a2_rig(i) * mem2_xy_rig(i,:) &
-        + b2_rig(i) * ( dTyx_dx_rig_tmp(i,:) + dTyx_dx_rig(i,:) )
+        do i = NX - NX_CPML_rig, NX
 
-      Hux(i,:) = Hux(i,:) + mem2_xx_rig(i,:)
-      Huy(i,:) = Huy(i,:) + mem2_xy_rig(i,:)
+            mem2_xx_rig(i,:) = a2_rig(i) * mem2_xx_rig(i,:) &
+                + b2_rig(i) * ( dTxx_dx_rig_tmp(i,:) + dTxx_dx_rig(i,:) )
 
-    enddo
+            mem2_xy_rig(i,:) = a2_rig(i) * mem2_xy_rig(i,:) &
+                + b2_rig(i) * ( dTyx_dx_rig_tmp(i,:) + dTyx_dx_rig(i,:) )
 
-    dTxx_dx_rig = dTxx_dx_rig_tmp
-    dTyx_dx_rig = dTyx_dx_rig_tmp
+            Hux(i,:) = Hux(i,:) + mem2_xx_rig(i,:)
+            Huy(i,:) = Huy(i,:) + mem2_xy_rig(i,:)
 
-!-----------END--------------------------------------------------
+        enddo
 
-    do j = 1,NY
-    do i = 0,NX
+        dTxx_dx_rig = dTxx_dx_rig_tmp
+        dTyx_dx_rig = dTyx_dx_rig_tmp
 
-      if ( MASK1Y(i,j) /= 0) then
+        !-----------END--------------------------------------------------
 
-        Hux(i,j-1:j) = Hux(i,j-1:j) + tmp2_yx(i,j) * Dely
-        Huy(i,j-1:j) = Huy(i,j-1:j) + tmp2_yy(i,j) * Dely
+        do j = 1,NY
+            do i = 0,NX
 
-!----------------implement CPML for y-axis-----------------------
+                if ( MASK1Y(i,j) /= 0) then
 
-        if ( j <= NY_CPML_btm ) then
+                    Hux(i,j-1:j) = Hux(i,j-1:j) + tmp2_yx(i,j) * Dely
+                    Huy(i,j-1:j) = Huy(i,j-1:j) + tmp2_yy(i,j) * Dely
 
-          dTxy_dy_btm_tmp(i,j-1:j) = dTxy_dy_btm_tmp(i,j-1:j) + tmp2_yx(i,j) * Dely
-          dTyy_dy_btm_tmp(i,j-1:j) = dTyy_dy_btm_tmp(i,j-1:j) + tmp2_yy(i,j) * Dely
+                    !----------------implement CPML for y-axis-----------------------
 
-        endif
-!-----------END--------------------------------------------------
+                    if ( j <= NY_CPML_btm ) then
 
-      endif
+                        dTxy_dy_btm_tmp(i,j-1:j) = dTxy_dy_btm_tmp(i,j-1:j) + tmp2_yx(i,j) * Dely
+                        dTyy_dy_btm_tmp(i,j-1:j) = dTyy_dy_btm_tmp(i,j-1:j) + tmp2_yy(i,j) * Dely
 
-    enddo
-    enddo
+                    endif
+                !-----------END--------------------------------------------------
 
-!-----------------implement CPML for y-axis------------------
-    do j = 0, NY_CPML_btm
+                endif
 
-      mem2_yx_btm(:,j) = a2_btm(j) * mem2_yx_btm(:,j) &
-        + b2_btm(j) * ( dTxy_dy_btm_tmp(:,j) + dTxy_dy_btm(:,j) )
+            enddo
+        enddo
 
-      mem2_yy_btm(:,j) = a2_btm(j) * mem2_yy_btm(:,j) &
-        + b2_btm(j) * ( dTyy_dy_btm_tmp(:,j) + dTyy_dy_btm(:,j) )
+        !-----implement CPML for y-axis------------------
+        !    This loop is automatically parallelized by ifort -parallel (with default threshold)
+        do j = 0, NY_CPML_btm
 
-      Hux(:,j) = Hux(:,j) + mem2_yx_btm(:,j)
-      Huy(:,j) = Huy(:,j) + mem2_yy_btm(:,j)
+            mem2_yx_btm(:,j) = a2_btm(j) * mem2_yx_btm(:,j) &
+                + b2_btm(j) * ( dTxy_dy_btm_tmp(:,j) + dTxy_dy_btm(:,j) )
 
-    enddo
+            mem2_yy_btm(:,j) = a2_btm(j) * mem2_yy_btm(:,j) &
+                + b2_btm(j) * ( dTyy_dy_btm_tmp(:,j) + dTyy_dy_btm(:,j) )
 
-    dTxy_dy_btm = dTxy_dy_btm_tmp
-    dTyy_dy_btm = dTyy_dy_btm_tmp
+            Hux(:,j) = Hux(:,j) + mem2_yx_btm(:,j)
+            Huy(:,j) = Huy(:,j) + mem2_yy_btm(:,j)
 
+        enddo
+        !    This loop is automatically parallelized by ifort -parallel (with default threshold)
 
-!-----------END----------------------------------------------
+        dTxy_dy_btm = dTxy_dy_btm_tmp
+        dTyy_dy_btm = dTyy_dy_btm_tmp
 
 
-  end subroutine
+    !-----------END----------------------------------------------
 
 
-!##################################################################################
+    end subroutine
 
-  subroutine compt_traction_force&
-    ( NX,NY,MASK1X,MASK1Y,MASK2X,MASK2Y,ux,uy,C,DELTAX,DELTAY, &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
-      a1_lef, a1_rig, a1_btm, &
-      b1_lef, b1_rig, b1_btm, &
-      a2_lef, a2_rig, a2_btm, &
-      b2_lef, b2_rig, b2_btm, &
-      dux_dx_lef, duy_dx_lef, &
-      dux_dx_rig, duy_dx_rig, &
-      dux_dy_btm, duy_dy_btm, &
-      dTxx_dx_lef, dTyx_dx_lef, &
-      dTxx_dx_rig, dTyx_dx_rig, &
-      dTxy_dy_btm, dTyy_dy_btm, &
-      mem1_xx_lef, mem1_xy_lef, &
-      mem1_xx_rig, mem1_xy_rig, &
-      mem1_yx_btm, mem1_yy_btm, &
-      mem2_xx_lef, mem2_xy_lef, &
-      mem2_xx_rig, mem2_xy_rig, &
-      mem2_yx_btm, mem2_yy_btm, &
-      Hux,Huy )
 
-    integer, intent(in) :: &
-      NX, NY, &
-      MASK1X(NX,0:NY), MASK1Y(0:NX,NY), &
-      MASK2X(NX,NY), MASK2Y(NX,NY)
+    !##################################################################################
 
-    double precision, intent(in) :: &
-      ux(0:NX,0:NY), uy(0:NX,0:NY), &
-      C(3,3,NX,NY), &
-      DELTAX, DELTAY
+    subroutine compt_traction_force&
+        ( NX,NY,MASK1X,MASK1Y,MASK2X,MASK2Y,ux,uy,C,DELTAX,DELTAY, &
+        NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
+        a1_lef, a1_rig, a1_btm, &
+        b1_lef, b1_rig, b1_btm, &
+        a2_lef, a2_rig, a2_btm, &
+        b2_lef, b2_rig, b2_btm, &
+        dux_dx_lef, duy_dx_lef, &
+        dux_dx_rig, duy_dx_rig, &
+        dux_dy_btm, duy_dy_btm, &
+        dTxx_dx_lef, dTyx_dx_lef, &
+        dTxx_dx_rig, dTyx_dx_rig, &
+        dTxy_dy_btm, dTyy_dy_btm, &
+        mem1_xx_lef, mem1_xy_lef, &
+        mem1_xx_rig, mem1_xy_rig, &
+        mem1_yx_btm, mem1_yy_btm, &
+        mem2_xx_lef, mem2_xy_lef, &
+        mem2_xx_rig, mem2_xy_rig, &
+        mem2_yx_btm, mem2_yy_btm, &
+        Hux,Huy )
 
-!----------------valuables for CPML-------------------------------------
-    integer, intent(in) :: &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
+        integer, intent(in) :: &
+            NX, NY, &
+            MASK1X(NX,0:NY), MASK1Y(0:NX,NY), &
+            MASK2X(NX,NY), MASK2Y(NX,NY)
 
-    double precision, intent(in) :: &
-      a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
-      b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
-      a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
-      b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
+        double precision, intent(in) :: &
+            ux(0:NX,0:NY), uy(0:NX,0:NY), &
+            C(3,3,NX,NY), &
+            DELTAX, DELTAY
 
-    double precision, intent(inout) :: &
-      dux_dx_lef(NX_CPML_lef,0:NY), &
-      duy_dx_lef(NX_CPML_lef,0:NY), &
-      dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      dux_dy_btm(0:NX,NY_CPML_btm), &
-      duy_dy_btm(0:NX,NY_CPML_btm), &
-      dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
-      dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
-      dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
-      dTyy_dy_btm(0:NX,0:NY_CPML_btm)
+        !----------------valuables for CPML-------------------------------------
+        integer, intent(in) :: &
+            NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
 
-    double precision :: &
-      dTxx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
-      dTyx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
-      dTxx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
-      dTyx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
-      dTxy_dy_btm_tmp(0:NX,0:NY_CPML_btm), &
-      dTyy_dy_btm_tmp(0:NX,0:NY_CPML_btm)
+        double precision, intent(in) :: &
+            a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
+            b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
+            a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
+            b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
 
+        double precision, intent(inout) :: &
+            dux_dx_lef(NX_CPML_lef,0:NY), &
+            duy_dx_lef(NX_CPML_lef,0:NY), &
+            dux_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            duy_dx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            dux_dy_btm(0:NX,NY_CPML_btm), &
+            duy_dy_btm(0:NX,NY_CPML_btm), &
+            dTxx_dx_lef(0:NX_CPML_lef,0:NY), &
+            dTyx_dx_lef(0:NX_CPML_lef,0:NY), &
+            dTxx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            dTyx_dx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            dTxy_dy_btm(0:NX,0:NY_CPML_btm), &
+            dTyy_dy_btm(0:NX,0:NY_CPML_btm)
 
-    double precision, intent(inout) :: &
-      mem1_xx_lef(NX_CPML_lef,0:NY), &
-      mem1_xy_lef(NX_CPML_lef,0:NY), &
-      mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
-      mem1_yx_btm(0:NX,NY_CPML_btm), &
-      mem1_yy_btm(0:NX,NY_CPML_btm), &
-      mem2_xx_lef(0:NX_CPML_lef,0:NY), &
-      mem2_xy_lef(0:NX_CPML_lef,0:NY), &
-      mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
-      mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
-      mem2_yx_btm(0:NX,0:NY_CPML_btm), &
-      mem2_yy_btm(0:NX,0:NY_CPML_btm)
+        double precision :: &
+            dTxx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
+            dTyx_dx_lef_tmp(0:NX_CPML_lef,0:NY), &
+            dTxx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
+            dTyx_dx_rig_tmp(NX - NX_CPML_rig:NX,0:NY), &
+            dTxy_dy_btm_tmp(0:NX,0:NY_CPML_btm), &
+            dTyy_dy_btm_tmp(0:NX,0:NY_CPML_btm)
 
-!-----------END--------------------------------------------------------
 
-    double precision, intent(out) :: &
-      Hux(0:NX,0:NY), Huy(0:NX,0:NY)
+        double precision, intent(inout) :: &
+            mem1_xx_lef(NX_CPML_lef,0:NY), &
+            mem1_xy_lef(NX_CPML_lef,0:NY), &
+            mem1_xx_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            mem1_xy_rig(NX - NX_CPML_rig+1:NX,0:NY), &
+            mem1_yx_btm(0:NX,NY_CPML_btm), &
+            mem1_yy_btm(0:NX,NY_CPML_btm), &
+            mem2_xx_lef(0:NX_CPML_lef,0:NY), &
+            mem2_xy_lef(0:NX_CPML_lef,0:NY), &
+            mem2_xx_rig(NX - NX_CPML_rig:NX,0:NY), &
+            mem2_xy_rig(NX - NX_CPML_rig:NX,0:NY), &
+            mem2_yx_btm(0:NX,0:NY_CPML_btm), &
+            mem2_yy_btm(0:NX,0:NY_CPML_btm)
 
-    double precision :: &
-      tmp1_xx(NX,0:NY), tmp1_xy(NX,0:NY), &
-      tmp1_yx(0:NX,NY), tmp1_yy(0:NX,NY), &
-      tmp2_xx(NX,0:NY), tmp2_xy(NX,0:NY), &
-      tmp2_yx(0:NX,NY), tmp2_yy(0:NX,NY), &
-      Pxx, Pxy, Pyx, Pyy, &
-      Qxx, Qxy, Qyx, Qyy, &
-      sgm_xx, sgm_xy, sgm_yy, &
-      gmm_xx, gmm_xy, gmm_yx, gmm_yy
+        !-----------END--------------------------------------------------------
 
-    double precision :: &
-      E(3), Ec(2), F(3), Fc(2), Delx(2), Dely(2)
+        double precision, intent(out) :: &
+            Hux(0:NX,0:NY), Huy(0:NX,0:NY)
 
-    integer :: i, j
+        double precision :: &
+            tmp1_xx(NX,0:NY), tmp1_xy(NX,0:NY), &
+            tmp1_yx(0:NX,NY), tmp1_yy(0:NX,NY), &
+            tmp2_xx(NX,0:NY), tmp2_xy(NX,0:NY), &
+            tmp2_yx(0:NX,NY), tmp2_yy(0:NX,NY), &
+            Pxx, Pxy, Pyx, Pyy, &
+            Qxx, Qxy, Qyx, Qyy, &
+            sgm_xx, sgm_xy, sgm_yy, &
+            gmm_xx, gmm_xy, gmm_yx, gmm_yy
 
-    E = (/ 5.d0, 8.d0, -1.d0 /) / 12.d0
-    Ec = (/ 1.d0, 1.d0 /) / 2.d0
-    F = (/ 1.d0, -2.d0, 1.d0 /) * sqrt(5.d0) / 12.d0
-    Fc = (/ 1.d0, -1.d0 /) / 2.d0
-    Delx = (/ -1.d0, 1.d0 /) / DELTAX
-    Dely = (/ -1.d0, 1.d0 /) / DELTAY
+        double precision :: &
+            E(3), Ec(2), F(3), Fc(2), Delx(2), Dely(2)
 
-    tmp2_xx = 0.d0
-    tmp2_xy = 0.d0
-    tmp2_yx = 0.d0
-    tmp2_yy = 0.d0
+        integer :: i, j
 
-    Hux = 0.d0
-    Huy = 0.d0
+        E = (/ 5.d0, 8.d0, -1.d0 /) / 12.d0
+        Ec = (/ 1.d0, 1.d0 /) / 2.d0
+        F = (/ 1.d0, -2.d0, 1.d0 /) * sqrt(5.d0) / 12.d0
+        Fc = (/ 1.d0, -1.d0 /) / 2.d0
+        Delx = (/ -1.d0, 1.d0 /) / DELTAX
+        Dely = (/ -1.d0, 1.d0 /) / DELTAY
 
+        tmp2_xx = 0.d0
+        tmp2_xy = 0.d0
+        tmp2_yx = 0.d0
+        tmp2_yy = 0.d0
 
-    do j = 0,NY
-    do i = 1,NX
+        Hux = 0.d0
+        Huy = 0.d0
 
-      if ( MASK1X(i,j) /= 0 ) then
 
-        tmp1_xx(i,j) = dot_product( Delx, ux(i-1:i,j) )
-        tmp1_xy(i,j) = dot_product( Delx, uy(i-1:i,j) )
+        do j = 0,NY
+            do i = 1,NX
 
-      else
+                if ( MASK1X(i,j) /= 0 ) then
 
-        tmp1_xx(i,j) = 0.d0
-        tmp1_xy(i,j) = 0.d0
+                    tmp1_xx(i,j) = dot_product( Delx, ux(i-1:i,j) )
+                    tmp1_xy(i,j) = dot_product( Delx, uy(i-1:i,j) )
 
-      endif
+                else
 
+                    tmp1_xx(i,j) = 0.d0
+                    tmp1_xy(i,j) = 0.d0
 
-!-----------implement CPML for x-axis-----------------------------------
-      if ( i <= NX_CPML_lef ) then
+                endif
 
-        mem1_xx_lef(i,j) = a1_lef(i) * mem1_xx_lef(i,j) + b1_lef(i) * ( tmp1_xx(i,j) + dux_dx_lef(i,j) )
-        mem1_xy_lef(i,j) = a1_lef(i) * mem1_xy_lef(i,j) + b1_lef(i) * ( tmp1_xy(i,j) + duy_dx_lef(i,j) )
 
-        dux_dx_lef(i,j) = tmp1_xx(i,j)
-        duy_dx_lef(i,j) = tmp1_xy(i,j)
+                !-----------implement CPML for x-axis-----------------------------------
+                if ( i <= NX_CPML_lef ) then
 
-        tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_lef(i,j)
-        tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_lef(i,j)
+                    mem1_xx_lef(i,j) = a1_lef(i) * mem1_xx_lef(i,j) + b1_lef(i) * ( tmp1_xx(i,j) + dux_dx_lef(i,j) )
+                    mem1_xy_lef(i,j) = a1_lef(i) * mem1_xy_lef(i,j) + b1_lef(i) * ( tmp1_xy(i,j) + duy_dx_lef(i,j) )
 
-      elseif ( i > NX - NX_CPML_rig  ) then
+                    dux_dx_lef(i,j) = tmp1_xx(i,j)
+                    duy_dx_lef(i,j) = tmp1_xy(i,j)
 
-        mem1_xx_rig(i,j) = a1_rig(i) * mem1_xx_rig(i,j) + b1_rig(i) * ( tmp1_xx(i,j) + dux_dx_rig(i,j) )
-        mem1_xy_rig(i,j) = a1_rig(i) * mem1_xy_rig(i,j) + b1_rig(i) * ( tmp1_xy(i,j) + duy_dx_rig(i,j) )
+                    tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_lef(i,j)
+                    tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_lef(i,j)
 
-        dux_dx_rig(i,j) = tmp1_xx(i,j)
-        duy_dx_rig(i,j) = tmp1_xy(i,j)
+                elseif ( i > NX - NX_CPML_rig  ) then
 
-        tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_rig(i,j)
-        tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_rig(i,j)
+                    mem1_xx_rig(i,j) = a1_rig(i) * mem1_xx_rig(i,j) + b1_rig(i) * ( tmp1_xx(i,j) + dux_dx_rig(i,j) )
+                    mem1_xy_rig(i,j) = a1_rig(i) * mem1_xy_rig(i,j) + b1_rig(i) * ( tmp1_xy(i,j) + duy_dx_rig(i,j) )
 
-      endif
+                    dux_dx_rig(i,j) = tmp1_xx(i,j)
+                    duy_dx_rig(i,j) = tmp1_xy(i,j)
 
-!---------------END----------------------------------------------------
+                    tmp1_xx(i,j) = tmp1_xx(i,j) + mem1_xx_rig(i,j)
+                    tmp1_xy(i,j) = tmp1_xy(i,j) + mem1_xy_rig(i,j)
 
-    enddo
-    enddo
+                endif
 
-    do j = 1,NY
-    do i = 0,NX
+            !---------------END----------------------------------------------------
 
-      if ( MASK1Y(i,j) /= 0 ) then
+            enddo
+        enddo
 
-        tmp1_yx(i,j) = dot_product( Dely, ux(i,j-1:j) )
-        tmp1_yy(i,j) = dot_product( Dely, uy(i,j-1:j) )
+        do j = 1,NY
+            do i = 0,NX
 
-      else
+                if ( MASK1Y(i,j) /= 0 ) then
 
-        tmp1_yx(i,j) = 0.d0
-        tmp1_yy(i,j) = 0.d0
+                    tmp1_yx(i,j) = dot_product( Dely, ux(i,j-1:j) )
+                    tmp1_yy(i,j) = dot_product( Dely, uy(i,j-1:j) )
 
-      endif
+                else
 
-!------------------implement CPML for y-axis----------------------------
-      if ( j <= NY_CPML_btm ) then
+                    tmp1_yx(i,j) = 0.d0
+                    tmp1_yy(i,j) = 0.d0
 
-        mem1_yx_btm(i,j) = a1_btm(j) * mem1_yx_btm(i,j) + b1_btm(j) * ( tmp1_yx(i,j) + dux_dy_btm(i,j) )
-        mem1_yy_btm(i,j) = a1_btm(j) * mem1_yy_btm(i,j) + b1_btm(j) * ( tmp1_yy(i,j) + duy_dy_btm(i,j) )
+                endif
 
-        dux_dy_btm(i,j) = tmp1_yx(i,j)
-        duy_dy_btm(i,j) = tmp1_yy(i,j)
+                !------------------implement CPML for y-axis----------------------------
+                if ( j <= NY_CPML_btm ) then
 
-        tmp1_yx(i,j) = tmp1_yx(i,j) + mem1_yx_btm(i,j)
-        tmp1_yy(i,j) = tmp1_yy(i,j) + mem1_yy_btm(i,j)
+                    mem1_yx_btm(i,j) = a1_btm(j) * mem1_yx_btm(i,j) + b1_btm(j) * ( tmp1_yx(i,j) + dux_dy_btm(i,j) )
+                    mem1_yy_btm(i,j) = a1_btm(j) * mem1_yy_btm(i,j) + b1_btm(j) * ( tmp1_yy(i,j) + duy_dy_btm(i,j) )
 
-      endif
+                    dux_dy_btm(i,j) = tmp1_yx(i,j)
+                    duy_dy_btm(i,j) = tmp1_yy(i,j)
 
-!---------------END-----------------------------------------------------
+                    tmp1_yx(i,j) = tmp1_yx(i,j) + mem1_yx_btm(i,j)
+                    tmp1_yy(i,j) = tmp1_yy(i,j) + mem1_yy_btm(i,j)
 
-    enddo
-    enddo
+                endif
 
+            !---------------END-----------------------------------------------------
 
-    do j = 1,NY
-    do i = 1,NX
+            enddo
+        enddo
 
-      if ( MASK2Y(i,j) == 2 ) then
 
-        Pxx = dot_product( E, tmp1_xx(i,j-1:j+1) )
-        Pxy = dot_product( E, tmp1_xy(i,j-1:j+1) )
-        Qxx = dot_product( F, tmp1_xx(i,j-1:j+1) )
-        Qxy = dot_product( F, tmp1_xy(i,j-1:j+1) )
+        do j = 1,NY
+            do i = 1,NX
 
-      elseif ( MASK2Y(i,j) == 1 ) then
-        Pxx = dot_product( Ec, tmp1_xx(i,j-1:j) )
-        Pxy = dot_product( Ec, tmp1_xy(i,j-1:j) )
-        Qxx = dot_product( Fc, tmp1_xx(i,j-1:j) )
-        Qxy = dot_product( Fc, tmp1_xy(i,j-1:j) )
+                if ( MASK2Y(i,j) == 2 ) then
 
-      else
+                    Pxx = dot_product( E, tmp1_xx(i,j-1:j+1) )
+                    Pxy = dot_product( E, tmp1_xy(i,j-1:j+1) )
+                    Qxx = dot_product( F, tmp1_xx(i,j-1:j+1) )
+                    Qxy = dot_product( F, tmp1_xy(i,j-1:j+1) )
 
-        Pxx = 0.d0
-        Pxy = 0.d0
-        Qxx = 0.d0
-        Qxy = 0.d0
+                elseif ( MASK2Y(i,j) == 1 ) then
+                    Pxx = dot_product( Ec, tmp1_xx(i,j-1:j) )
+                    Pxy = dot_product( Ec, tmp1_xy(i,j-1:j) )
+                    Qxx = dot_product( Fc, tmp1_xx(i,j-1:j) )
+                    Qxy = dot_product( Fc, tmp1_xy(i,j-1:j) )
 
-      endif
+                else
 
-      if ( MASK2X(i,j) == 2 ) then
+                    Pxx = 0.d0
+                    Pxy = 0.d0
+                    Qxx = 0.d0
+                    Qxy = 0.d0
 
-        Pyx = dot_product( E, tmp1_yx(i-1:i+1,j) )
-        Pyy = dot_product( E, tmp1_yy(i-1:i+1,j) )
-        Qyx = dot_product( F, tmp1_yx(i-1:i+1,j) )
-        Qyy = dot_product( F, tmp1_yy(i-1:i+1,j) )
+                endif
 
-      elseif ( MASK2X(i,j) == 1 ) then
+                if ( MASK2X(i,j) == 2 ) then
 
-        Pyx = dot_product( Ec, tmp1_yx(i-1:i,j) )
-        Pyy = dot_product( Ec, tmp1_yy(i-1:i,j) )
-        Qyx = dot_product( Fc, tmp1_yx(i-1:i,j) )
-        Qyy = dot_product( Fc, tmp1_yy(i-1:i,j) )
+                    Pyx = dot_product( E, tmp1_yx(i-1:i+1,j) )
+                    Pyy = dot_product( E, tmp1_yy(i-1:i+1,j) )
+                    Qyx = dot_product( F, tmp1_yx(i-1:i+1,j) )
+                    Qyy = dot_product( F, tmp1_yy(i-1:i+1,j) )
 
-      else
+                elseif ( MASK2X(i,j) == 1 ) then
 
-        Pxx = 0.d0
-        Pxy = 0.d0
-        Qxx = 0.d0
-        Qxy = 0.d0
+                    Pyx = dot_product( Ec, tmp1_yx(i-1:i,j) )
+                    Pyy = dot_product( Ec, tmp1_yy(i-1:i,j) )
+                    Qyx = dot_product( Fc, tmp1_yx(i-1:i,j) )
+                    Qyy = dot_product( Fc, tmp1_yy(i-1:i,j) )
 
-      endif
+                else
 
+                    Pxx = 0.d0
+                    Pxy = 0.d0
+                    Qxx = 0.d0
+                    Qxy = 0.d0
 
-      Pxy = Pxy + Pyx
-      sgm_xx = C(1,1,i,j) * Pxx + C(1,3,i,j) * Pxy + C(1,2,i,j) * Pyy
-      sgm_xy = C(3,1,i,j) * Pxx + C(3,3,i,j) * Pxy + C(3,2,i,j) * Pyy
-      sgm_yy = C(2,1,i,j) * Pxx + C(2,3,i,j) * Pxy + C(2,2,i,j) * Pyy
+                endif
 
-      gmm_xx = C(1,1,i,j) * Qxx + C(1,3,i,j) * Qxy
-      gmm_xy = C(3,1,i,j) * Qxx + C(3,3,i,j) * Qxy
-      gmm_yx = C(3,3,i,j) * Qyx + C(3,2,i,j) * Qyy
-      gmm_yy = C(2,3,i,j) * Qyx + C(2,2,i,j) * Qyy
 
+                Pxy = Pxy + Pyx
+                sgm_xx = C(1,1,i,j) * Pxx + C(1,3,i,j) * Pxy + C(1,2,i,j) * Pyy
+                sgm_xy = C(3,1,i,j) * Pxx + C(3,3,i,j) * Pxy + C(3,2,i,j) * Pyy
+                sgm_yy = C(2,1,i,j) * Pxx + C(2,3,i,j) * Pxy + C(2,2,i,j) * Pyy
 
-      if ( MASK2Y(i,j) == 2 ) then
+                gmm_xx = C(1,1,i,j) * Qxx + C(1,3,i,j) * Qxy
+                gmm_xy = C(3,1,i,j) * Qxx + C(3,3,i,j) * Qxy
+                gmm_yx = C(3,3,i,j) * Qyx + C(3,2,i,j) * Qyy
+                gmm_yy = C(2,3,i,j) * Qyx + C(2,2,i,j) * Qyy
 
-        tmp2_xx(i,j-1:j+1) = tmp2_xx(i,j-1:j+1) + sgm_xx * E + gmm_xx * F
-        tmp2_xy(i,j-1:j+1) = tmp2_xy(i,j-1:j+1) + sgm_xy * E + gmm_xy * F
 
-      elseif ( MASK2Y(i,j) == 1 ) then
+                if ( MASK2Y(i,j) == 2 ) then
 
-        tmp2_xx(i,j-1:j) = tmp2_xx(i,j-1:j) + sgm_xx * Ec + gmm_xx * Fc
-        tmp2_xy(i,j-1:j) = tmp2_xy(i,j-1:j) + sgm_xy * Ec + gmm_xy * Fc
+                    tmp2_xx(i,j-1:j+1) = tmp2_xx(i,j-1:j+1) + sgm_xx * E + gmm_xx * F
+                    tmp2_xy(i,j-1:j+1) = tmp2_xy(i,j-1:j+1) + sgm_xy * E + gmm_xy * F
 
-      endif
+                elseif ( MASK2Y(i,j) == 1 ) then
 
-      if ( MASK2X(i,j) == 2 ) then
+                    tmp2_xx(i,j-1:j) = tmp2_xx(i,j-1:j) + sgm_xx * Ec + gmm_xx * Fc
+                    tmp2_xy(i,j-1:j) = tmp2_xy(i,j-1:j) + sgm_xy * Ec + gmm_xy * Fc
 
-        tmp2_yx(i-1:i+1,j) = tmp2_yx(i-1:i+1,j) + sgm_xy * E + gmm_yx * F
-        tmp2_yy(i-1:i+1,j) = tmp2_yy(i-1:i+1,j) + sgm_yy * E + gmm_yy * F
+                endif
 
-      elseif ( MASK2X(i,j) == 1 ) then
+                if ( MASK2X(i,j) == 2 ) then
 
-        tmp2_yx(i-1:i,j) = tmp2_yx(i-1:i,j) + sgm_xy * Ec + gmm_yx * Fc
-        tmp2_yy(i-1:i,j) = tmp2_yy(i-1:i,j) + sgm_yy * Ec + gmm_yy * Fc
+                    tmp2_yx(i-1:i+1,j) = tmp2_yx(i-1:i+1,j) + sgm_xy * E + gmm_yx * F
+                    tmp2_yy(i-1:i+1,j) = tmp2_yy(i-1:i+1,j) + sgm_yy * E + gmm_yy * F
 
-      endif
+                elseif ( MASK2X(i,j) == 1 ) then
 
-    enddo
-    enddo
+                    tmp2_yx(i-1:i,j) = tmp2_yx(i-1:i,j) + sgm_xy * Ec + gmm_yx * Fc
+                    tmp2_yy(i-1:i,j) = tmp2_yy(i-1:i,j) + sgm_yy * Ec + gmm_yy * Fc
 
+                endif
 
-!-----------set valuables for CPML to zero------------------------------------
-    dTxx_dx_lef_tmp = 0.d0
-    dTyx_dx_lef_tmp = 0.d0
-    dTxx_dx_rig_tmp = 0.d0
-    dTyx_dx_rig_tmp = 0.d0
-    dTxy_dy_btm_tmp = 0.d0
-    dTyy_dy_btm_tmp = 0.d0
-!-----------------END--------------------------------------------------------
+            enddo
+        enddo
 
-    do j = 0,NY
-    do i = 1,NX
 
-      if ( MASK1X(i,j) /= 0) then
+        !-----------set valuables for CPML to zero------------------------------------
+        dTxx_dx_lef_tmp = 0.d0
+        dTyx_dx_lef_tmp = 0.d0
+        dTxx_dx_rig_tmp = 0.d0
+        dTyx_dx_rig_tmp = 0.d0
+        dTxy_dy_btm_tmp = 0.d0
+        dTyy_dy_btm_tmp = 0.d0
+        !-----------------END--------------------------------------------------------
 
-        Hux(i-1:i,j) = Hux(i-1:i,j) + tmp2_xx(i,j) * Delx
-        Huy(i-1:i,j) = Huy(i-1:i,j) + tmp2_xy(i,j) * Delx
+        do j = 0,NY
+            do i = 1,NX
 
+                if ( MASK1X(i,j) /= 0) then
 
-!-----------implement CPML for x-axis------------------------------------------
-          if ( i <= NX_CPML_lef ) then
+                    Hux(i-1:i,j) = Hux(i-1:i,j) + tmp2_xx(i,j) * Delx
+                    Huy(i-1:i,j) = Huy(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-            dTxx_dx_lef_tmp(i-1:i,j) = dTxx_dx_lef_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
-            dTyx_dx_lef_tmp(i-1:i,j) = dTyx_dx_lef_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-          elseif ( i > NX - NX_CPML_rig  ) then
+                    !-----------implement CPML for x-axis------------------------------------------
+                    if ( i <= NX_CPML_lef ) then
 
-            dTxx_dx_rig_tmp(i-1:i,j) = dTxx_dx_rig_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
-            dTyx_dx_rig_tmp(i-1:i,j) = dTyx_dx_rig_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
+                        dTxx_dx_lef_tmp(i-1:i,j) = dTxx_dx_lef_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
+                        dTyx_dx_lef_tmp(i-1:i,j) = dTyx_dx_lef_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-          endif
-!-----------------END--------------------------------------------------------
+                    elseif ( i > NX - NX_CPML_rig  ) then
 
-      endif
+                        dTxx_dx_rig_tmp(i-1:i,j) = dTxx_dx_rig_tmp(i-1:i,j) + tmp2_xx(i,j) * Delx
+                        dTyx_dx_rig_tmp(i-1:i,j) = dTyx_dx_rig_tmp(i-1:i,j) + tmp2_xy(i,j) * Delx
 
-    enddo
-    enddo
+                    endif
+                !-----------------END--------------------------------------------------------
 
-!--------------implement CPML for x-axis--------------------------
+                endif
 
-    do i = 0, NX_CPML_lef
+            enddo
+        enddo
 
-      mem2_xx_lef(i,:) = a2_lef(i) * mem2_xx_lef(i,:) &
-        + b2_lef(i) * ( dTxx_dx_lef_tmp(i,:) + dTxx_dx_lef(i,:) )
+        !--------------implement CPML for x-axis--------------------------
 
-      mem2_xy_lef(i,:) = a2_lef(i) * mem2_xy_lef(i,:) &
-        + b2_lef(i) * ( dTyx_dx_lef_tmp(i,:) + dTyx_dx_lef(i,:) )
+        do i = 0, NX_CPML_lef
 
-      Hux(i,:) = Hux(i,:) + mem2_xx_lef(i,:)
-      Huy(i,:) = Huy(i,:) + mem2_xy_lef(i,:)
+            mem2_xx_lef(i,:) = a2_lef(i) * mem2_xx_lef(i,:) &
+                + b2_lef(i) * ( dTxx_dx_lef_tmp(i,:) + dTxx_dx_lef(i,:) )
 
-    enddo
+            mem2_xy_lef(i,:) = a2_lef(i) * mem2_xy_lef(i,:) &
+                + b2_lef(i) * ( dTyx_dx_lef_tmp(i,:) + dTyx_dx_lef(i,:) )
 
-    dTxx_dx_lef = dTxx_dx_lef_tmp
-    dTyx_dx_lef = dTyx_dx_lef_tmp
+            Hux(i,:) = Hux(i,:) + mem2_xx_lef(i,:)
+            Huy(i,:) = Huy(i,:) + mem2_xy_lef(i,:)
 
-    do i = NX - NX_CPML_rig, NX
+        enddo
 
-      mem2_xx_rig(i,:) = a2_rig(i) * mem2_xx_rig(i,:) &
-        + b2_rig(i) * ( dTxx_dx_rig_tmp(i,:) + dTxx_dx_rig(i,:) )
+        dTxx_dx_lef = dTxx_dx_lef_tmp
+        dTyx_dx_lef = dTyx_dx_lef_tmp
 
-      mem2_xy_rig(i,:) = a2_rig(i) * mem2_xy_rig(i,:) &
-        + b2_rig(i) * ( dTyx_dx_rig_tmp(i,:) + dTyx_dx_rig(i,:) )
+        do i = NX - NX_CPML_rig, NX
 
-      Hux(i,:) = Hux(i,:) + mem2_xx_rig(i,:)
-      Huy(i,:) = Huy(i,:) + mem2_xy_rig(i,:)
+            mem2_xx_rig(i,:) = a2_rig(i) * mem2_xx_rig(i,:) &
+                + b2_rig(i) * ( dTxx_dx_rig_tmp(i,:) + dTxx_dx_rig(i,:) )
 
-    enddo
+            mem2_xy_rig(i,:) = a2_rig(i) * mem2_xy_rig(i,:) &
+                + b2_rig(i) * ( dTyx_dx_rig_tmp(i,:) + dTyx_dx_rig(i,:) )
 
-    dTxx_dx_rig = dTxx_dx_rig_tmp
-    dTyx_dx_rig = dTyx_dx_rig_tmp
+            Hux(i,:) = Hux(i,:) + mem2_xx_rig(i,:)
+            Huy(i,:) = Huy(i,:) + mem2_xy_rig(i,:)
 
-!-----------END--------------------------------------------------
+        enddo
 
+        dTxx_dx_rig = dTxx_dx_rig_tmp
+        dTyx_dx_rig = dTyx_dx_rig_tmp
 
-    do j = 1,NY
-    do i = 0,NX
+        !-----------END--------------------------------------------------
 
-      if ( MASK1Y(i,j) /= 0) then
 
-        Hux(i,j-1:j) = Hux(i,j-1:j) + tmp2_yx(i,j) * Dely
-        Huy(i,j-1:j) = Huy(i,j-1:j) + tmp2_yy(i,j) * Dely
+        do j = 1,NY
+            do i = 0,NX
 
-!----------------implement CPML for y-axis-----------------------
+                if ( MASK1Y(i,j) /= 0) then
 
-        if ( j <= NY_CPML_btm ) then
+                    Hux(i,j-1:j) = Hux(i,j-1:j) + tmp2_yx(i,j) * Dely
+                    Huy(i,j-1:j) = Huy(i,j-1:j) + tmp2_yy(i,j) * Dely
 
-          dTxy_dy_btm_tmp(i,j-1:j) = dTxy_dy_btm_tmp(i,j-1:j) + tmp2_yx(i,j) * Dely
-          dTyy_dy_btm_tmp(i,j-1:j) = dTyy_dy_btm_tmp(i,j-1:j) + tmp2_yy(i,j) * Dely
+                    !----------------implement CPML for y-axis-----------------------
 
-        endif
-!-----------END--------------------------------------------------
+                    if ( j <= NY_CPML_btm ) then
 
-      endif
+                        dTxy_dy_btm_tmp(i,j-1:j) = dTxy_dy_btm_tmp(i,j-1:j) + tmp2_yx(i,j) * Dely
+                        dTyy_dy_btm_tmp(i,j-1:j) = dTyy_dy_btm_tmp(i,j-1:j) + tmp2_yy(i,j) * Dely
 
-    enddo
-    enddo
+                    endif
+                !-----------END--------------------------------------------------
 
-!-----------------implement CPML for y-axis------------------
-    do j = 0, NY_CPML_btm
+                endif
 
-      mem2_yx_btm(:,j) = a2_btm(j) * mem2_yx_btm(:,j) &
-        + b2_btm(j) * ( dTxy_dy_btm_tmp(:,j) + dTxy_dy_btm(:,j) )
+            enddo
+        enddo
 
-      mem2_yy_btm(:,j) = a2_btm(j) * mem2_yy_btm(:,j) &
-        + b2_btm(j) * ( dTyy_dy_btm_tmp(:,j) + dTyy_dy_btm(:,j) )
+        !-----------------implement CPML for y-axis------------------
+        !    This loop is automatically parallelized by ifort -parallel (with default threshold)
+        do j = 0, NY_CPML_btm
 
-      Hux(:,j) = Hux(:,j) + mem2_yx_btm(:,j)
-      Huy(:,j) = Huy(:,j) + mem2_yy_btm(:,j)
+            mem2_yx_btm(:,j) = a2_btm(j) * mem2_yx_btm(:,j) &
+                + b2_btm(j) * ( dTxy_dy_btm_tmp(:,j) + dTxy_dy_btm(:,j) )
 
-    enddo
+            mem2_yy_btm(:,j) = a2_btm(j) * mem2_yy_btm(:,j) &
+                + b2_btm(j) * ( dTyy_dy_btm_tmp(:,j) + dTyy_dy_btm(:,j) )
 
-    dTxy_dy_btm = dTxy_dy_btm_tmp
-    dTyy_dy_btm = dTyy_dy_btm_tmp
-!-----------END----------------------------------------------
+            Hux(:,j) = Hux(:,j) + mem2_yx_btm(:,j)
+            Huy(:,j) = Huy(:,j) + mem2_yy_btm(:,j)
 
-  end subroutine
-!##################################################################################
+        enddo
+        !    This loop is automatically parallelized by ifort -parallel (with default threshold)
 
-  subroutine set_CPML_parameters&
-    ( NX,NY,DELTAT,DELTAX,DELTAY, &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
-      vp, reflection_rate, source_freq, NPOWER, &
-      a1_lef, a1_rig, a1_btm, &
-      b1_lef, b1_rig, b1_btm, &
-      a2_lef, a2_rig, a2_btm, &
-      b2_lef, b2_rig, b2_btm )
+        dTxy_dy_btm = dTxy_dy_btm_tmp
+        dTyy_dy_btm = dTyy_dy_btm_tmp
+    !-----------END----------------------------------------------
 
-    integer, intent(in) :: &
-      NX, NY, &
-      NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
-      NPOWER
+    end subroutine
+    !##################################################################################
 
-    double precision, intent(in) :: &
-      DELTAT, DELTAX, DELTAY
+    subroutine set_CPML_parameters&
+        ( NX,NY,DELTAT,DELTAX,DELTAY, &
+        NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
+        vp, reflection_rate, source_freq, NPOWER, &
+        a1_lef, a1_rig, a1_btm, &
+        b1_lef, b1_rig, b1_btm, &
+        a2_lef, a2_rig, a2_btm, &
+        b2_lef, b2_rig, b2_btm )
 
-    double precision, intent(in) :: &
-      vp, reflection_rate, source_freq
+        integer, intent(in) :: &
+            NX, NY, &
+            NX_CPML_lef, NX_CPML_rig, NY_CPML_btm, &
+            NPOWER
 
-    double precision, intent(out) :: &
-      a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
-      b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
-      a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
-      b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
+        double precision, intent(in) :: &
+            DELTAT, DELTAX, DELTAY
 
-    double precision :: &
-      L_lef, L_rig, L_btm, &
-      d0_lef, d0_rig, d0_btm, alph0, &
-      d, alph
+        double precision, intent(in) :: &
+            vp, reflection_rate, source_freq
 
-    integer :: i, j
+        double precision, intent(out) :: &
+            a1_lef(NX_CPML_lef), a1_rig(NX - NX_CPML_rig+1:NX), a1_btm(NY_CPML_btm), &
+            b1_lef(NX_CPML_lef), b1_rig(NX - NX_CPML_rig+1:NX), b1_btm(NY_CPML_btm), &
+            a2_lef(0:NX_CPML_lef), a2_rig(NX - NX_CPML_rig:NX), a2_btm(0:NY_CPML_btm), &
+            b2_lef(0:NX_CPML_lef), b2_rig(NX - NX_CPML_rig:NX), b2_btm(0:NY_CPML_btm)
 
-    double precision, parameter :: PI = 3.1415926535897932d0
+        double precision :: &
+            L_lef, L_rig, L_btm, &
+            d0_lef, d0_rig, d0_btm, alph0, &
+            d, alph
 
-    L_lef = dble(NX_CPML_lef) * DELTAX
-    L_rig = dble(NX_CPML_rig) * DELTAX
-    L_btm = dble(NY_CPML_btm) * DELTAY
+        integer :: i, j
 
+        double precision, parameter :: PI = 3.1415926535897932d0
 
-    d0_lef = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_lef
-    d0_rig = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_rig
-    d0_btm = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_btm
+        L_lef = dble(NX_CPML_lef) * DELTAX
+        L_rig = dble(NX_CPML_rig) * DELTAX
+        L_btm = dble(NY_CPML_btm) * DELTAY
 
-    alph0 = PI * source_freq
-!------------------the left side of x-axis--------------------------
-    do i = 1,NX_CPML_lef
 
-      j = NX_CPML_lef - i
-      d = d0_lef * ( ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) )
+        d0_lef = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_lef
+        d0_rig = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_rig
+        d0_btm = - dble(NPOWER+1) * vp * log(reflection_rate) / 2.d0 / L_btm
 
-      a1_lef(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+        alph0 = PI * source_freq
+        !------------------the left side of x-axis--------------------------
+        do i = 1,NX_CPML_lef
 
-      b1_lef(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = NX_CPML_lef - i
+            d = d0_lef * ( ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - ( dble(j) + 0.5d0 ) / dble(NX_CPML_lef) )
 
-    enddo
+            a1_lef(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
 
-    do i = 0,NX_CPML_lef
+            b1_lef(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
-      j = NX_CPML_lef - i
+        enddo
 
-      d = d0_lef * ( dble(j)/ dble(NX_CPML_lef) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - dble(j) / dble(NX_CPML_lef) )
+        do i = 0,NX_CPML_lef
 
-      a2_lef(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
-      b2_lef(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = NX_CPML_lef - i
 
-    enddo
-!------------------the right side of x-axis--------------------------
-    do i = NX - NX_CPML_rig+1, NX
+            d = d0_lef * ( dble(j)/ dble(NX_CPML_lef) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - dble(j) / dble(NX_CPML_lef) )
 
-      j = i - NX + NX_CPML_rig
+            a2_lef(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+            b2_lef(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
-      d = d0_rig * ( ( dble(j) - 0.5d0 ) / dble(NX_CPML_rig) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - ( dble(j) - 0.5d0 ) / dble(NX_CPML_rig) )
+        enddo
+        !------------------the right side of x-axis--------------------------
+        do i = NX - NX_CPML_rig+1, NX
 
-      a1_rig(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
-      b1_rig(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = i - NX + NX_CPML_rig
 
-    enddo
+            d = d0_rig * ( ( dble(j) - 0.5d0 ) / dble(NX_CPML_rig) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - ( dble(j) - 0.5d0 ) / dble(NX_CPML_rig) )
 
-    do i = NX - NX_CPML_rig, NX
+            a1_rig(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+            b1_rig(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
-      j = i - NX + NX_CPML_rig
+        enddo
 
-      d = d0_rig * ( dble(j)/ dble(NX_CPML_rig) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - dble(j) / dble(NX_CPML_rig) )
+        do i = NX - NX_CPML_rig, NX
 
-      a2_rig(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
-      b2_rig(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = i - NX + NX_CPML_rig
 
-    enddo
-!------------------the bottom of y-axis------------------------------
-    do i = 1,NY_CPML_btm
+            d = d0_rig * ( dble(j)/ dble(NX_CPML_rig) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - dble(j) / dble(NX_CPML_rig) )
 
-      j = NY_CPML_btm - i
+            a2_rig(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+            b2_rig(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
-      d = d0_btm * ( ( dble(j) + 0.5d0 ) / dble(NY_CPML_btm) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - ( dble(j) + 0.5d0 ) / dble(NY_CPML_btm) )
+        enddo
+        !------------------the bottom of y-axis------------------------------
+        do i = 1,NY_CPML_btm
 
-      a1_btm(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
-      b1_btm(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = NY_CPML_btm - i
 
-    enddo
+            d = d0_btm * ( ( dble(j) + 0.5d0 ) / dble(NY_CPML_btm) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - ( dble(j) + 0.5d0 ) / dble(NY_CPML_btm) )
 
-    do i = 0,NY_CPML_btm
+            a1_btm(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+            b1_btm(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
 
-      j = NY_CPML_btm - i
+        enddo
 
-      d = d0_btm * ( dble(j)/ dble(NY_CPML_btm) ) ** NPOWER
-      alph = alph0 * ( 1.d0 - dble(j) / dble(NY_CPML_btm) )
+        do i = 0,NY_CPML_btm
 
-      a2_btm(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
-      b2_btm(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+            j = NY_CPML_btm - i
 
-    enddo
+            d = d0_btm * ( dble(j)/ dble(NY_CPML_btm) ) ** NPOWER
+            alph = alph0 * ( 1.d0 - dble(j) / dble(NY_CPML_btm) )
 
-  end subroutine
+            a2_btm(i) = (2.d0 - (d + alph) * DELTAT) / (2.d0 + (d + alph) * DELTAT)
+            b2_btm(i) = - d * DELTAT / (2.d0 + (d + alph) * DELTAT)
+
+        enddo
+
+    end subroutine
 
 end module
 
