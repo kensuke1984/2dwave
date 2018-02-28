@@ -10,13 +10,24 @@ program main2d
     use parameter_2dwave
     use copt2d_cpml
     implicit none
-
+! **************MPI***********************************
+    include 'mpif.h'
+    integer :: ierr, my_rank, ista, petot
     !---------------------------------------------------------------
     include 'declaration.f90'
     call get_arguments
-    call read_parameter(1)
+    !---------------MPI------------------------
+    call mpi_init (ierr)
+    call MPI_COMM_SIZE (MPI_COMM_WORLD, PETOT, ierr)
+    call MPI_COMM_RANK (MPI_COMM_WORLD, my_rank, ierr)
+!    print *, my_rank
+    !---------------------------------------
+    call read_parameter(my_rank+1)
     call allocate_main
     call allocate_cpml(NX, NY, NX_CPML_lef,NX_CPML_rig, NY_CPML_btm)
+
+
+
 
     !###########################################################################
     DELTAX = X_size / dble(NX)
@@ -160,6 +171,7 @@ program main2d
 
         call apply_Dirichlet_boundary_condition
 
+
         !---Carjan abrorbing boundary condition (optional)---------
         if ( use_Cerjan ) then
 
@@ -181,6 +193,8 @@ program main2d
 
     !------output waveforms-------------------------------------------
     if ( need_waveform ) call write_waveform
+
+    call mpi_finalize (ierr)
     stop
 !##########################################################################################################################
 

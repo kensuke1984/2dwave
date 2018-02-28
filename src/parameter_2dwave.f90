@@ -57,7 +57,6 @@ module parameter_2dwave
     double precision :: dumping_rate_Cerjan = 0.0001d0
     namelist/cerjan/use_Cerjan, N_Cerjan, dumping_rate_Cerjan
 
-    character(:), allocatable :: arg
     !----------------parameters for output
     logical :: need_snapshot = .true.
     integer :: NT_snap = 100
@@ -79,7 +78,6 @@ module parameter_2dwave
     double precision, allocatable, dimension (:) :: X_rec, Y_rec
     !---------------------------------------------------------------------
 
-
     !----------------CPML settings-------------------------------------
     integer :: NX_CPML_lef, NX_CPML_rig, NY_CPML_btm
     double precision :: reflection_rate = 0.001d0
@@ -87,7 +85,12 @@ module parameter_2dwave
     double precision :: source_freq = 1.1283791671d0 *6.5
     integer :: NPOWER = 2
     namelist /cpml/NX_CPML_lef,NX_CPML_rig, NY_CPML_btm,reflection_rate,source_freq, NPOWER
-!-----------CPML END--------------------------------------------------------
+    !-----------CPML END--------------------------------------------------------
+
+    ! arguments for the process (means parameter files).
+    !  Each file name must be under 100 characters.
+!    character(:), allocatable :: arg
+    character (100), allocatable :: args(:)
 contains
 
     !#####################
@@ -155,15 +158,12 @@ contains
             enddo
         enddo
 
-
-
     end subroutine read_structure_csv
 
-
-
-    subroutine read_parameter
-        print *, 'Reading the input file'
-        open (1, file=arg, status='old')
+    subroutine read_parameter(i)
+        integer, intent (in) :: i
+        print *, 'Reading the input file: ',args(i)
+        open (1, file=args(i), status='old')
         read (1, structure)
         read (1, geometry)
         read (1, source)
@@ -186,19 +186,23 @@ contains
     end subroutine output_parameter
 
     subroutine get_arguments
-        integer :: length, status
+        integer :: length, status, i
         intrinsic :: command_argument_count, get_command_argument
-        if (command_argument_count() > 1) stop 'Only one argument (input file name) is available'
+        !        if (command_argument_count() > 1) stop 'Only one argument (input file name) is available'
         if (command_argument_count() == 0) stop 'Input file name is required'
+        allocate(args(command_argument_count()))
 
-        call get_command_argument(1, length = length, status = status)
-        if (status == 0) then
-            allocate (character(length) :: arg)
-            call get_command_argument(1, arg, status = status)
-            if (status == 0) print *, 'Input file is "', arg, '"'
-        !        deallocate (arg)
-        end if
-        if (status /= 0) stop 'Error on argument'
+        do i = 1, size(args)
+            status = 0
+            !        call get_command_argument(i, length = length, status = status)
+            if (status == 0) then
+                !            allocate (character(100) :: arg)
+                call get_command_argument(i, args(i), status = status)
+            !        deallocate (arg)
+            end if
+            if (status /= 0) stop 'Error on argument'
+        enddo
+!        write(*,*) 'Input file: ',(args(i),', ',i=1,size(args))
     end subroutine get_arguments
 
     subroutine set_receiver_info
