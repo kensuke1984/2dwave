@@ -11,8 +11,7 @@ module parameter_2dwave
     implicit none
     ! model
     character(len=32) :: modelfile = 'kmodel.csv'
-    logical :: header_model = .true.
-    namelist /structure/modelfile, header_model
+    namelist /structure/modelfile
     double precision, allocatable :: &
         rho(:,:), C(:,:,:,:)
 
@@ -69,9 +68,8 @@ module parameter_2dwave
     integer :: num_rec
     !recievers names and the locations (X,Y) are included  station
     character(len=32) :: recinfo = 'recinfo.csv'
-    logical :: header_recinfo = .false.
     namelist/output/need_snapshot, NT_snap, snap_format, &
-        need_waveform, wave_format, recinfo, header_recinfo
+        need_waveform, wave_format, recinfo
      !output files in order
     character(len=100), allocatable :: outfname_rec(:)
     !position for receivers in order
@@ -89,38 +87,42 @@ module parameter_2dwave
 
     ! arguments for the process (means parameter files).
     !  Each file name must be under 100 characters.
-!    character(:), allocatable :: arg
+    !    character(:), allocatable :: arg
     character (100), allocatable :: args(:)
 contains
 
     !#####################
     subroutine read_structure_csv
                !##########################
-        double precision, allocatable, dimension (:,:) :: &
-            vp, vs
+        double precision, allocatable, dimension (:,:) :: vp, vs
 
-        double precision :: read_rho,read_vp,read_vs
+        double precision :: read_rho, read_vp, read_vs
 
-        double precision :: &
-            mu, lambda, elas(3,3)
+        double precision :: mu, lambda, elas(3,3)
 
-        integer :: &
-            iline,  i, j, ix, iy
+        integer :: i, j, ix, iy, io, read_count
+
+        character (100) :: buffer
 
         allocate(rho(NX,NY), vp(NX,NY), vs(NX,NY))
         allocate(C(3,3,NX,NY))
         rho = - 80704.d0
         open (17, file=modelfile, status='old')
-        read (17, '()')
-        do iline = 1, NX*NY
-
-            read (17, *) ix, iy, read_rho, read_vp, read_vs
+        read_count = 0
+        do
+            read (17,'(a)' , iostat=io) buffer
+            buffer = adjustl(buffer)
+            if(buffer(1:1) =='#' .or. buffer(1:1) == '!') cycle
+            if (io/=0) exit
+            read (buffer, *) ix, iy, read_rho, read_vp, read_vs
             rho(ix,iy)=read_rho
             vp(ix,iy)=read_vp
             vs(ix,iy)=read_vs
-
+            read_count = read_count+1
         enddo
         close(17)
+
+        if (read_count /= NX*NY) stop 'this model file (csv) is invalid.'
 
         do ix = 1, NX
             do iy = 1, NY
@@ -128,7 +130,7 @@ contains
                 if ( rho(ix,iy) < 0.d0 .or. &
                     rho(1,iy) <= 1.d-10 .or. &
                     rho(NX,iy) <= 1.d-10 .or. &
-                    rho(ix,1) <= 1.d-10 ) stop 'this model is invalid'
+                    rho(ix,1) <= 1.d-10 ) stop 'this model is invalid. (containing impossible values)'
 
                 mu = rho(ix,iy) * vs(ix,iy) * vs(ix,iy)
                 lambda = rho(ix,iy) * ( vp(ix,iy) * vp(ix,iy) - 2.d0 * vs(ix,iy) * vs(ix,iy) )
@@ -186,23 +188,19 @@ contains
     end subroutine output_parameter
 
     subroutine get_arguments
-        integer :: length, status, i
+        integer :: sta, i
         intrinsic :: command_argument_count, get_command_argument
         !        if (command_argument_count() > 1) stop 'Only one argument (input file name) is available'
         if (command_argument_count() == 0) stop 'Input file name is required'
         allocate(args(command_argument_count()))
 
+        sta = 0
         do i = 1, size(args)
-            status = 0
             !        call get_command_argument(i, length = length, status = status)
-            if (status == 0) then
-                !            allocate (character(100) :: arg)
-                call get_command_argument(i, args(i), status = status)
-            !        deallocate (arg)
-            end if
-            if (status /= 0) stop 'Error on argument'
+            call get_command_argument(i, args(i), status = sta)
+            if (sta /= 0) stop 'Error on argument'
         enddo
-!        write(*,*) 'Input file: ',(args(i),', ',i=1,size(args))
+    !        write(*,*) 'Input file: ',(args(i),', ',i=1,size(args))
     end subroutine get_arguments
 
     subroutine set_receiver_info
@@ -215,7 +213,7 @@ contains
         num_rec =0
         !    if ( header ) read (17, '()')  !skip header
         do
-            read(17,'(a)',iostat=io) buffer
+            read(17, '(a)', iostat=io) buffer
             buffer = adjustl(buffer)
             name_length = index(buffer,',')
             buffer = buffer(1:1)

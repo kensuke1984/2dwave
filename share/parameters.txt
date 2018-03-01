@@ -3,7 +3,6 @@
 !---Information for input structure
 &structure
 modelfile = '../share/structure.csv'
-header_model = .true.
 /
 
 !--- Parameter set for region of computation 
@@ -62,7 +61,6 @@ header_model = .true.
   wave_format = '(3f15.7)'
 !receivers names and the locations (X,Y) are included  station
   recinfo = '../share/station.csv'
-  header_recinfo = t
 &end
 
 
