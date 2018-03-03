@@ -10,7 +10,7 @@ module parameter_2dwave
   
     implicit none
     ! model
-    character(len=32) :: modelfile = 'kmodel.csv'
+    character(32) :: modelfile
     namelist /structure/modelfile
     double precision, allocatable :: &
         rho(:,:), C(:,:,:,:)
@@ -21,7 +21,7 @@ module parameter_2dwave
     ! number of boxes in the region
     integer :: NX = 600
     integer :: NY = 300
-    namelist/geometry/X_size, Y_size, NX, NY
+    namelist/grid/X_size, Y_size, NX, NY
 
     ! Information for source
     !location
@@ -67,10 +67,10 @@ module parameter_2dwave
     !number of recievers
     integer :: num_rec
     !recievers names and the locations (X,Y) are included  station
-    character(len=32) :: recinfo = ''
+    character(32) :: recinfo = ''
     namelist/output/ NT_snap, snap_format, wave_format, recinfo
      !output files in order
-    character(len=100), allocatable :: outfname_rec(:)
+    character(100), allocatable :: outfname_rec(:)
     !position for receivers in order
     double precision, allocatable, dimension (:) :: X_rec, Y_rec
     !---------------------------------------------------------------------
@@ -166,7 +166,7 @@ contains
         print *, 'Reading the input file: ',args(i)
         open (1, file=args(i), status='old')
         read (1, structure)
-        read (1, geometry)
+        read (1, grid)
         read (1, source)
         read (1, computation)
         read (1, cerjan)
@@ -182,7 +182,7 @@ contains
 
     subroutine output_parameter
         write(*,structure)
-        write(*,geometry)
+        write(*,grid)
         write(*,source)
         write(*,computation)
         write(*,cerjan)

@@ -6,7 +6,7 @@ modelfile = '../share/structure.csv'
 /
 
 !--- Parameter set for region of computation 
-&geometry
+&grid
   ! size of region
   X_size = 8.d0
   Y_size = 4.d0
@@ -47,7 +47,7 @@ modelfile = '../share/structure.csv'
   use_Cerjan = f
   N_Cerjan = 5
   dumping_rate_Cerjan = 0.0001d0
-&end
+/
 
 
 &output
@@ -59,7 +59,7 @@ modelfile = '../share/structure.csv'
   wave_format = '(3f15.7)'
 !receivers names and the locations (X,Y) are included  station
   recinfo = '../share/station.csv'
-&end
+/
 
 
 &cpml
@@ -70,4 +70,4 @@ modelfile = '../share/structure.csv'
   reflection_rate = 0.001d0
   source_freq = 7.334464579
   NPOWER = 2
-&end
+/
