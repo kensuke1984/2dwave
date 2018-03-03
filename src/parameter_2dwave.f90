@@ -32,7 +32,7 @@ module parameter_2dwave
     double precision :: vx = 1.d0
     double precision :: vy = 0.d0
 
-    logical :: source_type_double_couple = .true.
+    logical :: source_type_double_couple = .false.
     double precision :: mxx = 1.d0
     double precision :: mxy = 0.d0
     double precision :: myx = 0.d0
@@ -57,19 +57,18 @@ module parameter_2dwave
     namelist/cerjan/use_Cerjan, N_Cerjan, dumping_rate_Cerjan
 
     !----------------parameters for output
-    logical :: need_snapshot = .true.
-    integer :: NT_snap = 100
+    logical :: need_snapshot = .false.
+    integer :: NT_snap = 0
     !should be four outputs (x y ux uy)
     character(12) :: snap_format = '(4G15.5)'
-    logical :: need_waveform = .true.
+    logical :: need_waveform = .false.
     !should be three outputs (t ux uy)
     character(12) :: wave_format = '(3G15.5)'
     !number of recievers
     integer :: num_rec
     !recievers names and the locations (X,Y) are included  station
-    character(len=32) :: recinfo = 'recinfo.csv'
-    namelist/output/need_snapshot, NT_snap, snap_format, &
-        need_waveform, wave_format, recinfo
+    character(len=32) :: recinfo = ''
+    namelist/output/ NT_snap, snap_format, wave_format, recinfo
      !output files in order
     character(len=100), allocatable :: outfname_rec(:)
     !position for receivers in order
@@ -174,6 +173,10 @@ contains
         read (1, output)
         read (1, cpml)
         close (1)
+        if ( source_type_single .eq. source_type_double_couple ) &
+        stop 'Either source_type_single or source_type_double_couple must be true.'
+        if (recinfo /= '') need_waveform = .true.
+        if (0<NT_snap) need_snapshot =.true.
         call read_structure_csv
     end subroutine read_parameter
 

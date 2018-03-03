@@ -51,12 +51,10 @@ modelfile = '../share/structure.csv'
 
 
 &output
-  !snapshot of wavefield
-  need_snapshot = t
-  NT_snap = 100
+  !parameter for frequency of taking waveform field snapshots
+  NT_snap = 0
   !should be four outputs (x y ux uy)
   snap_format = '(4f15.7)'
-  need_waveform = t
   !should be three outputs (t ux uy)
   wave_format = '(3f15.7)'
 !receivers names and the locations (X,Y) are included  station
